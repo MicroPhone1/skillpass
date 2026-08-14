@@ -22,6 +22,7 @@ import profile   from './views/profile.js';
 import teacher   from './views/teacher.js';
 import classes   from './views/classes.js';
 import { status as getAIStatus, lastStatus as lastAIStatus, onStatusChange } from './ai/client.js';
+import { startTour } from './tour.js';
 
 /* ------------------------------------------------------------ routes */
 const ROUTES = { home, tracks, exam, lab, tutor, progress, assessment, community,
@@ -195,6 +196,8 @@ function paintUser(){
       ${state.certificates.length ? `<span class="um-count">${state.certificates.length}</span>` : ''}</a>
     <a class="um-item" href="#/passport">${icon('medal')} สมุดทักษะ</a>
     <div class="um-sep"></div>
+    <button class="um-item" data-tour-replay>${icon('spark')} ดูวิธีใช้งานอีกครั้ง</button>
+    <div class="um-sep"></div>
     <button class="um-item danger" data-logout>${icon('arrowR')} ออกจากระบบ</button>`;
 }
 
@@ -223,8 +226,12 @@ function startApp(user){
   getAIStatus().then(paintAIStatus);
   render();
 
+  /* ครั้งแรกที่เข้าใช้พาทัวร์ให้เลย ครั้งต่อไปทักสั้น ๆ พอ
+     รอให้ shell วาดเสร็จก่อน ไม่งั้นทัวร์จะหาปุ่มที่ต้องชี้ไม่เจอ */
   if (!state.seenTour){
     state.seenTour = true; save();
+    setTimeout(() => startTour({ onDone: () => go('tracks') }), 700);
+  } else {
     setTimeout(() => toast(
       user.guest ? 'กำลังใช้โหมดผู้เยี่ยมชม — เริ่มจากเลือกเส้นทางทักษะได้เลย'
                  : `ยินดีต้อนรับ ${displayName()} — เริ่มจากเลือกเส้นทางทักษะได้เลย`,
@@ -248,6 +255,12 @@ function boot(){
   });
 
   on(document, 'click', '.um-item', closeMenu);
+
+  /* เมนูต้องปิดสนิทก่อน ไม่งั้นทัวร์จะไปวัดตำแหน่งปุ่มที่ยังถูกเมนูบังอยู่ */
+  on(document, 'click', '[data-tour-replay]', () => {
+    closeMenu();
+    setTimeout(() => startTour(), 120);
+  });
 
   on(document, 'click', '[data-logout]', () => {
     if (!confirm('ออกจากระบบตอนนี้? ความคืบหน้าของคุณจะถูกบันทึกไว้')) return;

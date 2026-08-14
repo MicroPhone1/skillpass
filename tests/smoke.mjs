@@ -896,5 +896,29 @@ await check('ข้อมูลสาธิตพาไปถึงเกณฑ�
   console.log('       เกณฑ์: ' + e.checks.map(c => `${c.id}=${c.now}`).join('  '));
 });
 
+await check('ทัวร์สอนใช้งานชี้ไปยังปุ่มที่มีอยู่จริง', async () => {
+  const T2 = await import(url('js/tour.js'));
+  if (typeof T2.startTour !== 'function') throw new Error('tour.js ไม่ได้ export startTour');
+
+  const tourSrc = fs.readFileSync(path.join(ROOT, 'js/tour.js'), 'utf8');
+  const appSrc  = fs.readFileSync(path.join(ROOT, 'js/app.js'), 'utf8');
+  const htmlSrc = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+
+  /* ปุ่มเมนูถูกวาดตอนรัน จึงเทียบกับรายการ nav ในซอร์สแทน
+     ถ้ามีใครเปลี่ยนชื่อ route แล้วลืมแก้ทัวร์ ทัวร์จะชี้ไปที่ว่าง ๆ โดยไม่มีใครรู้ */
+  const navIds = new Set([...appSrc.matchAll(/\bid:\s*'([a-z]+)'/g)].map(m => m[1]));
+  const routes = [...tourSrc.matchAll(/href="#\/([a-z]+)"/g)].map(m => m[1]);
+  if (!routes.length) throw new Error('ทัวร์ไม่ได้ชี้ไปที่เมนูไหนเลย');
+  for (const r of new Set(routes))
+    if (!navIds.has(r)) throw new Error(`ทัวร์ชี้ไป #/${r} ซึ่งไม่มีในเมนู`);
+
+  /* จุดที่ชี้แบบไม่ใช่เมนู ต้องมี id นั้นอยู่ใน shell จริง */
+  for (const id of [...tourSrc.matchAll(/target:\s*'#([a-z-]+)'/g)].map(m => m[1]))
+    if (!htmlSrc.includes(`id="${id}"`)) throw new Error(`ทัวร์ชี้ไป #${id} ซึ่งไม่มีใน index.html`);
+
+  /* ต้องเปิดซ้ำได้ ไม่ใช่ดูได้ครั้งเดียวตอนสมัคร */
+  if (!appSrc.includes('data-tour-replay')) throw new Error('ไม่มีทางเปิดทัวร์ซ้ำจากเมนูผู้ใช้');
+});
+
 console.log(fails ? `\n${fails} FAILURE(S)\n` : '\nall green\n');
 process.exit(fails ? 1 : 0);
