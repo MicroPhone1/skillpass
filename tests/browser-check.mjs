@@ -82,7 +82,10 @@ const assessmentReady = await waitFor(`document.querySelectorAll('.development-s
 const assessment = await evaluate(`({
   title:document.querySelector('#page-title')?.innerText || '',
   aiStatus:document.querySelector('#ai-status')?.innerText || '',
-  controls:document.querySelectorAll('.assessment-controls select').length,
+  /* หน้านี้เลิกใช้ <select> ของเบราว์เซอร์ไปแล้ว เปลี่ยนเป็น dropdown() ของ ui.js
+     ซึ่งวาดเป็นปุ่มเพื่อให้ใส่ไอคอน คำอธิบายย่อย และป้ายเปอร์เซ็นต์ในตัวเลือกได้
+     เทสต์เดิมยังนับ select อยู่จึงตกตลอดทั้งที่หน้าจอปกติดี */
+  controls:document.querySelectorAll('.assessment-controls .dd').length,
   steps:document.querySelectorAll('.development-step').length,
   sourceBadges:[...document.querySelectorAll('.ai-source')].map(x => x.innerText.trim()),
   blank:document.body.innerText.trim().length === 0,
