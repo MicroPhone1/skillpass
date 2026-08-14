@@ -11,10 +11,24 @@
 
 ---
 
-## เริ่มใช้งาน
+## ลองเล่นทันทีโดยไม่ต้องติดตั้งอะไร
+
+**https://microphone1.github.io/skillpass/**
+
+เวอร์ชันนี้ทำงานเต็มรูปแบบยกเว้นตัวติวเตอร์ AI ซึ่งจะสลับไปใช้เอนจินในเครื่องอัตโนมัติ
+(เพราะ GitHub Pages เสิร์ฟไฟล์นิ่งอย่างเดียว รัน Python ไม่ได้)
+กด **"ลองใช้แบบผู้เยี่ยมชม"** เข้าได้เลย ไม่ต้องสมัคร
+
+---
+
+## เริ่มใช้งานบนเครื่องตัวเอง
+
+ต้องมีแค่ **Python 3** เท่านั้น — โปรเจกต์นี้ไม่มี dependency ภายนอกสักตัว
+ทั้งฝั่งเซิร์ฟเวอร์และฝั่งหน้าเว็บ ไม่ต้อง `pip install` ไม่ต้อง `npm install` ไม่มีขั้นตอน build
 
 ```bash
-cd ~/Desktop/projects/skillpass
+git clone https://github.com/MicroPhone1/skillpass.git
+cd skillpass
 python serve.py
 ```
 
@@ -44,11 +58,36 @@ python serve.py --http          # บังคับ HTTP
 python serve.py --port 9000     # เปลี่ยนพอร์ต
 ```
 
+### เปิดตัวติวเตอร์ AI (ไม่บังคับ)
+
+ข้ามขั้นนี้ได้ แอปจะใช้เอนจินในเครื่องแทนแล้วขึ้นป้าย "โหมดในเครื่อง" ทุกฟีเจอร์ยังครบ
+
+```bash
+cp .env.example .env      # Windows Command Prompt ใช้  copy .env.example .env
+```
+
+แล้วเลือกทางใดทางหนึ่งใน `.env`
+
+| ทาง | ต้องมี | ค่าใช้จ่าย | ข้อมูลผู้เรียน |
+|---|---|---|---|
+| `ollama` | ติดตั้ง [Ollama](https://ollama.com) แล้ว `ollama pull qwen3:8b` | ฟรีถาวร | ไม่ออกนอกเครื่อง |
+| `gemini` | คีย์จาก [Google AI Studio](https://aistudio.google.com/apikey) | มีโควตาฟรี | ส่งขึ้นคลาวด์ |
+
+`.env` ถูกกันไว้ใน `.gitignore` แล้ว — อย่า commit คีย์ขึ้น repo
+
+### แชร์ให้เครื่องอื่นเข้า
+
+```powershell
+powershell -ExecutionPolicy Bypass -File start-shared.ps1   # ได้ URL https จากทุกที่ ผ่าน Cloudflare tunnel
+powershell -ExecutionPolicy Bypass -File share-lan.ps1      # เปิดเฉพาะวง Wi-Fi เดียวกัน (ต้องใช้สิทธิ์ Administrator)
+```
+
 ### รันชุดทดสอบ
 
 ```bash
 node tests/smoke.mjs                 # ตรวจทุกวิว ทุกเอนจิน และความสอดคล้องของข้อมูล
 node tests/retrieval-calibration.mjs # ดูคะแนนค้นหาของคำถามตรงเรื่อง vs นอกเรื่อง
+python tests/ai_gateway_test.py      # ตรวจ gateway, การถอยไปใช้เอนจินในเครื่อง และการแปลงข้อผิดพลาด
 ```
 
 ---
