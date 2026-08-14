@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E48C7">
+<title>SkillPass — ฝึกจนเป็น พิสูจน์ได้</title>
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%231E48C7'/><path d='M30 52l14 14 26-30' stroke='white' stroke-width='11' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+</head>
+<body>
+
+<!-- ========== หน้าเข้าสู่ระบบ / สมัครสมาชิก (นอก app shell) ========== -->
+<div id="auth-root" hidden></div>
+
+<div id="app-shell" hidden>
+
+  <!-- ========== Sidebar (desktop) ========== -->
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="currentColor"/><path d="M28 52l15 15 29-33" stroke="#fff" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="brand-text">
+        <strong>SkillPass</strong>
+        <span>ฝึกจนเป็น พิสูจน์ได้</span>
+      </div>
+    </div>
+
+    <nav id="main-nav" aria-label="เมนูหลัก"></nav>
+
+    <div class="sidebar-foot">
+      <div id="role-switch" class="role-switch" role="group" aria-label="สลับมุมมอง"></div>
+      <p class="sidebar-note">Prototype · ข้อมูลเก็บในเครื่องคุณเท่านั้น</p>
+    </div>
+  </aside>
+
+  <!-- ========== Main ========== -->
+  <div id="main-col">
+    <header id="topbar">
+      <button id="menu-btn" class="icon-btn" aria-label="เมนู">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div id="topbar-title">
+        <h1 id="page-title">หน้าแรก</h1>
+        <p id="page-sub"></p>
+      </div>
+      <div id="topbar-stats" class="topbar-stats"></div>
+
+      <button id="ai-status" class="ai-status" data-state="checking" type="button"
+        aria-label="กำลังตรวจสถานะ AI" title="คลิกเพื่อตรวจสถานะ AI ใหม่">
+        <span class="ai-status-dot"></span>
+        <span class="ai-status-label">กำลังตรวจ AI</span>
+      </button>
+
+      <div id="user-wrap">
+        <button id="user-btn" aria-haspopup="menu" aria-expanded="false" aria-label="เมนูบัญชีผู้ใช้"></button>
+        <div id="user-menu" role="menu"></div>
+      </div>
+    </header>
+
+    <main id="view" tabindex="-1"></main>
+  </div>
+
+  <!-- ========== Bottom nav (mobile) ========== -->
+  <nav id="bottom-nav" aria-label="เมนูหลัก (มือถือ)"></nav>
+
+  <div id="scrim" hidden></div>
+</div>
+
+<div id="toast-host" aria-live="polite"></div>
+<div id="modal-host"></div>
+
+<!-- ตาข่ายรองรับ: ถ้าโมดูลโหลดไม่ได้ (เปิดผ่าน file:// หรือมี error ตอนบูต)
+     ทั้ง shell และหน้าเข้าสู่ระบบจะถูกซ่อนอยู่ ผู้ใช้จะเห็นหน้าขาวโดยไม่รู้สาเหตุ -->
+<div id="boot-error" hidden>
+  <div>
+    <h1>เปิดแอปไม่สำเร็จ</h1>
+    <p id="boot-error-msg"></p>
+    <p class="hint" id="boot-error-hint"></p>
+    <button id="boot-retry" type="button">ลองใหม่</button>
+  </div>
+</div>
+<script>
+(function(){
+  var shown = false;
+
+  /* สาเหตุที่ทำให้จอนี้ขึ้นมีหลายแบบ และแก้คนละวิธี จึงต้องแยกให้ผู้ใช้รู้ว่าต้องทำอะไร
+     - เปิดผ่าน file://  → ต้องเปิดผ่านเซิร์ฟเวอร์
+     - เปิดผ่าน http(s) แต่โหลดไฟล์ไม่ได้ → เซิร์ฟเวอร์ปิด หรือลิงก์แชร์หมดอายุ
+       (URL ของ Cloudflare quick tunnel เปลี่ยนใหม่ทุกครั้งที่เปิด ลิงก์เดิมจะตาย)   */
+  function hintFor(){
+    if (location.protocol === 'file:')
+      return 'แอปนี้ใช้ ES modules จึงต้องเปิดผ่านเซิร์ฟเวอร์ ไม่ใช่ดับเบิลคลิกไฟล์ ' +
+             '— รัน python serve.py ในโฟลเดอร์โปรเจกต์ แล้วเปิดลิงก์ที่ขึ้นในหน้าต่างคำสั่ง';
+
+    if (/trycloudflare\.com$/.test(location.hostname))
+      return 'ลิงก์แชร์นี้อาจหมดอายุแล้ว — URL ของ quick tunnel จะเปลี่ยนใหม่ทุกครั้งที่เปิดเซิร์ฟเวอร์ ' +
+             'ขอลิงก์ใหม่จากผู้ที่แชร์ให้ หรือถ้าเป็นเครื่องคุณเอง ให้รัน start-shared.ps1 อีกครั้ง';
+
+    return 'ต่อกับเซิร์ฟเวอร์ไม่ได้ — ตรวจว่า python serve.py ยังรันอยู่ ' +
+           'แล้วกดลองใหม่ (ถ้าเพิ่งรีสตาร์ทเซิร์ฟเวอร์ รอสักครู่ก่อน)';
+  }
+
+  function fail(msg){
+    if (shown) return;
+    shown = true;
+    document.getElementById('boot-error-msg').textContent = msg || '';
+    document.getElementById('boot-error-hint').textContent = hintFor();
+    document.getElementById('boot-error').hidden = false;
+  }
+
+  document.getElementById('boot-retry').addEventListener('click', function(){
+    location.reload();
+  });
+
+  window.addEventListener('error', function(e){
+    if (e.target && e.target.tagName === 'SCRIPT') fail('โหลดไฟล์สคริปต์ไม่สำเร็จ');
+    else if (e.message) fail(e.message);
+  }, true);
+
+  window.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){
+      var shell = document.getElementById('app-shell');
+      var auth  = document.getElementById('auth-root');
+      if (shell.hidden && auth.hidden) fail('แอปไม่ตอบสนองภายในเวลาที่กำหนด');
+    }, 2500);
+  });
+})();
+</script>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
