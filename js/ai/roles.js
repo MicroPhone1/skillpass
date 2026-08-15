@@ -14,7 +14,8 @@ import { withFallback } from './client.js';
 import { state, abilityFor, displayName } from '../store.js';
 import { trackById, skillsOf, skillName } from '../data/tracks.js';
 import { drillsFor, drillById } from '../data/drills.js';
-import { retrieve, ask as askLocal, explainQuestion as explainLocal } from '../engine/tutor.js';
+import { retrieve, ask as askLocal, explainQuestion as explainLocal,
+         coachFor } from '../engine/tutor.js';
 import { trackReadiness, studyPlan, readinessBand } from '../engine/adaptive.js';
 
 /* ------------------------------------------------------------ ตัวช่วยแปลงข้อมูล */
@@ -108,6 +109,17 @@ export async function askTutor(question, { trackId, history = [] } = {}){
       ? data.usedSources.map(n => hits[n - 1]?.chunk).filter(Boolean)
       : hits.map(h => h.chunk)).map(c => c.source),
     hits: hits.map(h => ({ score: h.score })),
+    /* สามช่องนี้คือส่วนที่ทำให้คำตอบ "พาคิด" แทนที่จะ "จ่ายคำตอบ"
+       โมเดลบางตัวไม่ยอมส่งครบแม้จะบังคับใน schema ถ้าขาดให้เติมจากตัวสร้างในเครื่อง
+       ห้ามปล่อยว่าง เพราะช่องว่างจะทำให้ UI กลับไปยกคำตอบให้ทันทีเหมือนเดิม */
+    ...(() => {
+      const local = coachFor(question, hits[0]?.chunk);
+      return {
+        probe: data.probe || local.probe,
+        nextTime: data.nextTime || local.nextTime,
+        verify: data.verify || local.verify,
+      };
+    })(),
     followUps: data.followUps || [],
   }));
 
@@ -152,6 +164,16 @@ export async function explainAnswer(q, { given, correct }){
       { h:'สิ่งที่ควรจำ', text: data.keyPoint },
       ...(data.safety ? [{ h:'ข้อควรระวัง', text: data.safety }] : []),
     ],
+    /* เหมือนกับติวเตอร์ — ถ้าโมเดลไม่ส่งมา ให้ใช้ของเอนจินในเครื่องแทน
+       เฉลยที่ไม่มีคำถามชวนคิดจะกลายเป็นการยกคำตอบให้เฉย ๆ ทันที */
+    ...(() => {
+      const local = explainLocal(q, { given, correct });
+      return {
+        probe: data.probe || local.probe,
+        nextTime: data.nextTime || local.nextTime,
+        verify: data.verify || local.verify,
+      };
+    })(),
     sources: q.sources || [],
   }));
 

@@ -423,11 +423,26 @@ function explainBlock(rec, r){
       <h4>${icon(rec.correct ? 'check' : 'bulb')} ${esc(r.lead)}</h4>
       ${sourceBadge(r.source, { aiLabel:'AI อธิบาย', localLabel:'เฉลยในเครื่อง' })}
     </div>
-    ${r.blocks.map(b => `
-      ${b.h ? `<div class="small" style="font-weight:700;color:var(--blue-800);margin-top:10px">${esc(b.h)}</div>` : ''}
-      ${b.list ? `<ol class="steps">${b.list.map(s => `<li>${esc(s)}</li>`).join('')}</ol>`
-                : `<p class="small" style="line-height:1.75;margin-top:4px">${esc(b.text)}</p>`}
-    `).join('')}
+    ${r.probe ? `
+      <div class="coach-probe">${icon('spark')}
+        <div><b>${rec.correct ? 'ลองดันต่ออีกขั้น' : 'ลองหาจุดที่พลาดเองก่อน'}</b>
+        <p>${esc(r.probe)}</p></div>
+      </div>` : ''}
+
+    <details class="coach-reveal"${r.probe ? '' : ' open'}>
+      <summary>${r.probe ? 'คิดแล้ว ขอดูวิธีทำทีละขั้น' : 'วิธีทำทีละขั้น'}</summary>
+      ${r.blocks.map(b => `
+        ${b.h ? `<div class="small" style="font-weight:700;color:var(--blue-800);margin-top:10px">${esc(b.h)}</div>` : ''}
+        ${b.list ? `<ol class="steps">${b.list.map(s => `<li>${esc(s)}</li>`).join('')}</ol>`
+                  : `<p class="small" style="line-height:1.75;margin-top:4px">${esc(b.text)}</p>`}
+      `).join('')}
+    </details>
+
+    ${r.nextTime ? `<div class="coach-next">${icon('target')}
+      <div><b>ครั้งหน้าทำเองได้</b><p>${esc(r.nextTime)}</p></div></div>` : ''}
+    ${r.verify ? `<div class="coach-verify">${icon('info')}
+      <div><b>อย่าเพิ่งเชื่อทั้งหมด</b><p>${esc(r.verify)}</p></div></div>` : ''}
+
     ${r.sources.length ? `<div class="row tight" style="margin-top:12px">
       <span class="tiny muted">อ้างอิง:</span>
       ${r.sources.map(s => `<span class="src-chip">${icon('book')} ${esc(s.title)} · ${esc(s.ref)}</span>`).join('')}

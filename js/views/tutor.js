@@ -222,20 +222,39 @@ function bubble(m){
       <div class="bub">${esc(m.text)}</div></div>`;
   }
   const r = m.res;
-  const body = `
-    ${sourceBadge(r.source, { aiLabel:'ตอบโดย AI', localLabel:'ตอบในเครื่อง' })}
+
+  /* คำอธิบายเต็มถูกพับไว้หลังคำถามชวนคิด เปิดได้เมื่อผู้เรียนกดเอง
+     เจตนาคือให้ได้ลองคิดก่อนอย่างน้อยหนึ่งจังหวะ ไม่ใช่รับคำตอบไปเฉย ๆ */
+  const gated = !!r.probe && r.kind !== 'nohit';
+
+  const answer = `
     ${r.lead ? `<p style="font-weight:600">${esc(r.lead)}</p>` : ''}
     ${r.blocks.map(b => `
       ${b.h ? `<h5>${esc(b.h)}</h5>` : ''}
       ${b.list ? `<ul class="b">${b.list.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`
                : `<p style="margin-top:4px">${esc(b.text)}</p>`}
     `).join('')}
+    ${r.nextTime ? `<div class="coach-next">${icon('target')}
+      <div><b>ครั้งหน้าทำเองได้</b><p>${esc(r.nextTime)}</p></div></div>` : ''}
+    ${r.verify ? `<div class="coach-verify">${icon('info')}
+      <div><b>อย่าเพิ่งเชื่อทั้งหมด</b><p>${esc(r.verify)}</p></div></div>` : ''}
     ${r.sources?.length ? `<div class="sources">
       ${r.sources.map(s => `<span class="src-chip">${icon('book')} ${esc(s.title)} · ${esc(s.ref)}</span>`).join('')}
     </div>` : ''}
     ${r.hits?.length ? `<div class="tiny muted" style="margin-top:8px">
       ค้นเจอ ${r.hits.length} รายการ · คะแนนความเกี่ยวข้องสูงสุด ${r.hits[0].score}
     </div>` : ''}`;
+
+  const body = `
+    ${sourceBadge(r.source, { aiLabel:'ตอบโดย AI', localLabel:'ตอบในเครื่อง' })}
+    ${gated ? `
+      <div class="coach-probe">${icon('spark')}
+        <div><b>ลองคิดก่อนหนึ่งจังหวะ</b><p>${esc(r.probe)}</p></div>
+      </div>
+      <details class="coach-reveal">
+        <summary>คิดแล้ว ขอดูคำอธิบาย</summary>
+        ${answer}
+      </details>` : answer}`;
 
   return `<div class="msg"><div class="av">${icon(r.kind === 'nohit' ? 'info' : 'brain')}</div>
     <div class="bub"${r.kind === 'nohit' ? ' style="border-color:var(--warn);background:var(--warn-soft)"' : ''}>${body}</div></div>`;

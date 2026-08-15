@@ -920,5 +920,62 @@ await check('ทัวร์สอนใช้งานชี้ไปยัง�
   if (!appSrc.includes('data-tour-replay')) throw new Error('ไม่มีทางเปิดทัวร์ซ้ำจากเมนูผู้ใช้');
 });
 
+await check('AI พาคิดก่อนเฉลย ไม่ใช่จ่ายคำตอบ (เกณฑ์ JUMP Thailand)', () => {
+  /* ต้องผ่านทั้งที่ไม่มี AI ด้วย เพราะเดโมสาธารณะใช้เอนจินในเครื่อง
+     ถ้าเทสต์นี้ตก แปลว่าผู้เรียนได้คำตอบสำเร็จรูปโดยไม่ต้องคิดก่อน */
+  const a = tutor.ask('คำนวณขนาดสายไฟยังไง', { trackId:'electrician' });
+  if (a.kind !== 'answer') throw new Error('ควรตอบได้จากคลังความรู้');
+  for (const f of ['probe', 'nextTime', 'verify'])
+    if (!a[f]) throw new Error(`คำตอบติวเตอร์ขาด ${f}`);
+  if (!/ลอง|ก่อน/.test(a.probe)) throw new Error('probe ไม่ได้ชวนให้คิดก่อน');
+  /* nextTime ต้องเป็นวิธีที่ใช้ซ้ำได้ ไม่ใช่คำตอบของคำถามนี้ */
+  if (a.nextTime.length < 20) throw new Error('nextTime สั้นเกินกว่าจะเป็นวิธีที่ใช้ซ้ำได้');
+
+  const q = Q.QUESTIONS.find(x => x.track === 'electrician' && x.steps?.length);
+  for (const correct of [true, false]){
+    const e = tutor.explainQuestion(q, { given: q.answer, correct });
+    for (const f of ['probe', 'nextTime', 'verify'])
+      if (!e[f]) throw new Error(`เฉลย (correct=${correct}) ขาด ${f}`);
+    if (e.nextTime.includes(String(q.answer)))
+      throw new Error('nextTime ไปอ้างคำตอบของข้อนี้ ควรเป็นวิธีที่ใช้กับข้ออื่นได้');
+  }
+
+  /* ตอบถูกกับตอบผิดต้องถามคนละแบบ ไม่ใช่ประโยคสำเร็จรูปอันเดียว */
+  const right = tutor.explainQuestion(q, { given:q.answer, correct:true }).probe;
+  const wrong = tutor.explainQuestion(q, { given:q.answer, correct:false }).probe;
+  if (right === wrong) throw new Error('ตอบถูกกับตอบผิดใช้คำถามชวนคิดเดียวกัน');
+});
+
+await check('โมเดลไม่ส่งช่องพาคิดมา ระบบต้องเติมให้เอง ไม่ปล่อยว่าง', async () => {
+  const R = await import(url('js/ai/roles.js'));
+  const T3 = await import(url('js/engine/tutor.js'));
+
+  /* จำลองกรณีที่โมเดลตอบมาแบบไม่มี probe/nextTime/verify
+     ถ้าปล่อยว่าง UI จะกลับไปยกคำตอบให้ทันที ซึ่งผิดเกณฑ์ */
+  const local = T3.coachFor('คำนวณขนาดสายไฟยังไง', null);
+  for (const f of ['probe', 'nextTime', 'verify'])
+    if (!local[f]) throw new Error(`ตัวสร้างในเครื่องไม่คืน ${f} แม้ไม่มีเอกสารอ้างอิง`);
+  if (typeof R.askTutor !== 'function') throw new Error('roles.js ไม่ได้ export askTutor');
+});
+
+await check('gateway สั่ง AI ตามเกณฑ์เดียวกันกับเอนจินในเครื่อง', () => {
+  const py = fs.readFileSync(path.join(ROOT, 'aigateway.py'), 'utf8');
+  for (const [what, re] of [
+    ['กติกากลางเรื่องไม่ยกคำตอบสำเร็จรูป', /อย่ายกคำตอบสำเร็จรูป/],
+    ['กติกาเรื่องรักษาความยากที่สร้างทักษะ', /ความยากที่สร้างทักษะ/],
+    ['กติกาเรื่องทิ้งวิธีให้ใช้เองครั้งหน้า', /ใช้เองครั้งหน้า/],
+    ['กติกาเรื่องให้ผู้เรียนตรวจสอบเอง', /ตรวจสอบเองกับคู่มือ/],
+  ]) if (!re.test(py)) throw new Error('prompt กลางขาด' + what);
+
+  /* สองบทบาทที่ผู้เรียนเจอตรง ๆ ต้องบังคับสามช่องนี้เป็น required */
+  for (const role of ['tutor', 'explainer']){
+    const seg = py.slice(py.indexOf(`"${role}": {`), py.indexOf(`"${role}": {`) + 2600);
+    for (const f of ['probe', 'nextTime'])
+      if (!seg.includes(`"${f}"`)) throw new Error(`บทบาท ${role} ไม่มีช่อง ${f}`);
+    if (!/required.*probe/s.test(seg.slice(seg.indexOf('"required"'), seg.indexOf('"required"') + 160)))
+      throw new Error(`บทบาท ${role} ไม่ได้บังคับ probe`);
+  }
+});
+
 console.log(fails ? `\n${fails} FAILURE(S)\n` : '\nall green\n');
 process.exit(fails ? 1 : 0);

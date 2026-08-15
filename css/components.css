@@ -1143,3 +1143,33 @@ html.tour-open{overflow:hidden}
 @media (prefers-reduced-motion:reduce){
   .tour-hole,.tour-dots i{transition:none}
 }
+
+/* ============================================================
+   COACH — ส่วนที่ทำให้ AI "พาคิด" แทนที่จะ "จ่ายคำตอบ"
+   probe  = คำถามที่ยิงกลับก่อนเฉลย
+   next   = วิธีที่เอาไปใช้เองครั้งหน้า
+   verify = จุดที่ต้องไปตรวจกับคู่มือตัวจริง
+   ============================================================ */
+.coach-probe,.coach-next,.coach-verify{
+  display:flex;gap:11px;align-items:flex-start;
+  border-radius:10px;padding:12px 14px;margin-top:12px;
+}
+.coach-probe svg,.coach-next svg,.coach-verify svg{width:18px;height:18px;flex:none;margin-top:2px}
+.coach-probe b,.coach-next b,.coach-verify b{display:block;font-size:13.5px;margin-bottom:2px}
+.coach-probe p,.coach-next p,.coach-verify p{margin:0;font-size:14px;line-height:1.65}
+
+.coach-probe {background:var(--violet-soft);color:var(--violet)}
+.coach-next  {background:var(--ok-soft);color:var(--ok)}
+.coach-verify{background:var(--warn-soft);color:var(--warn)}
+.coach-probe p,.coach-next p,.coach-verify p{color:var(--ink-2)}
+
+.coach-reveal{margin-top:12px}
+.coach-reveal > summary{
+  cursor:pointer;font-size:14px;font-weight:600;color:var(--blue-600);
+  padding:8px 12px;border:1px dashed var(--blue-300);border-radius:9px;
+  list-style:none;display:inline-block;
+}
+.coach-reveal > summary::-webkit-details-marker{display:none}
+.coach-reveal > summary:hover{background:var(--blue-50)}
+.coach-reveal > summary:focus-visible{outline:2px solid var(--blue-600);outline-offset:2px}
+.coach-reveal[open] > summary{margin-bottom:8px;border-style:solid;color:var(--ink-3);border-color:var(--line)}
