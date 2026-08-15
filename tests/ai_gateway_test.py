@@ -94,7 +94,7 @@ check("client เลือกบทบาทนอกทะเบียนไม
 def _client_cannot_override_system():
     """ต่อให้ client ยัด key ชื่อ system/template มา ก็ต้องถูกมองเป็นข้อมูลเฉย ๆ"""
     captured = {}
-    def fake_provider(role_key, prompt, cfg):
+    def fake_provider(role_key, prompt, cfg, images=()):
         captured["prompt"] = prompt
         captured["system"] = g.ROLES[role_key]["system"]
         return {"lead": "x", "blocks": [], "grounded": True}
@@ -112,7 +112,7 @@ check("client แก้ system prompt ไม่ได้", _client_cannot_overri
 
 def _truncates_long_input():
     captured = {}
-    def fake_provider(role_key, prompt, cfg):
+    def fake_provider(role_key, prompt, cfg, images=()):
         captured["prompt"] = prompt
         return {"lead": "x", "blocks": [], "grounded": True}
     g.PROVIDERS["fake"] = fake_provider
@@ -130,7 +130,7 @@ def _no_key():
 check("ไม่มีคีย์ → บอก no-provider ไม่ใช่พังทั้งคำขอ", _no_key)
 
 def _upstream_error_is_caught():
-    def boom(role_key, prompt, cfg):
+    def boom(role_key, prompt, cfg, images=()):
         raise g.UpstreamError("billing", "เครดิตหมด")
     g.PROVIDERS["fake"] = boom
     r = g.handle("tutor", {"input": {}}, FakeCfg())
@@ -138,7 +138,7 @@ def _upstream_error_is_caught():
 check("ข้อผิดพลาดจากผู้ให้บริการถูกแปลงเป็นคำตอบปกติ ไม่ทำเซิร์ฟเวอร์ล่ม", _upstream_error_is_caught)
 
 def _unexpected_error_is_caught():
-    def boom(role_key, prompt, cfg):
+    def boom(role_key, prompt, cfg, images=()):
         raise ValueError("อะไรสักอย่างพัง")
     g.PROVIDERS["fake"] = boom
     r = g.handle("tutor", {"input": {}}, FakeCfg())
@@ -147,7 +147,7 @@ check("ข้อผิดพลาดที่ไม่คาดคิดก็�
 
 def _missing_fields_dont_crash():
     captured = {}
-    def fake_provider(role_key, prompt, cfg):
+    def fake_provider(role_key, prompt, cfg, images=()):
         captured["prompt"] = prompt
         return {}
     g.PROVIDERS["fake"] = fake_provider
@@ -243,6 +243,73 @@ def _strip_think():
     txt = '<think>ผมกำลังคิด...\nหลายบรรทัด</think>\n{"lead":"ok"}'
     assert g._THINK.sub("", txt).strip() == '{"lead":"ok"}', "ตัด <think> ไม่สำเร็จ"
 check("ตัดบล็อกคิดออกเสียงของโมเดลตระกูล Qwen/DeepSeek", _strip_think)
+
+print("\n== ผู้ตรวจชิ้นงานจากภาพ ==")
+
+def _only_inspector_takes_images():
+    assert g.ROLES["inspector"].get("vision") is True, "inspector ต้องประกาศว่ารับภาพ"
+    for name, role in g.ROLES.items():
+        if name != "inspector":
+            assert not role.get("vision"), f"{name} ไม่ควรรับภาพ"
+check("รับภาพได้เฉพาะบทบาทที่ประกาศไว้", _only_inspector_takes_images)
+
+def _inspector_needs_image():
+    out = g.handle("inspector", {"input": {"drill": "x"}, "images": []})
+    assert out["error"] == "no-image", out
+check("ไม่มีภาพ → ตอบ no-image ไม่ยิงขึ้นโมเดลเปล่า ๆ", _inspector_needs_image)
+
+def _image_validation():
+    kept = g._clean_images([
+        "data:image/jpeg;base64,/9j/4AAQSkZJRg==",   # ใช้ได้
+        "!!! ไม่ใช่ base64 !!!",                       # ถอดไม่ออก
+        123,                                          # ไม่ใช่ข้อความ
+        "",                                           # ว่าง
+        "A" * (6 * 1024 * 1024),                      # ใหญ่เกินเพดาน
+    ])
+    assert len(kept) == 1, kept
+    assert not kept[0].startswith("data:"), "ต้องตัด data URL prefix ออก"
+    assert len(g._clean_images(["/9j/4AAQSkZJRg=="] * 10)) <= g.MAX_IMAGES
+check("คัดภาพเสีย ภาพใหญ่เกิน และของที่ไม่ใช่ข้อความออก", _image_validation)
+
+def _no_workpiece_never_fails():
+    # วัดจริงกับ qwen2.5vl:7b แล้วพบว่ามันตอบ "ไม่ผ่าน" ทุกข้อกับภาพที่ไม่มีชิ้นงาน
+    # พร้อมบรรยายสิ่งที่ไม่มีอยู่ในภาพ ตัวกันจึงต้องอยู่ฝั่งเซิร์ฟเวอร์
+    # ไม่ใช่ฝากไว้กับความเชื่อฟังของโมเดล
+    out = g._guard_inspection({
+        "workpieceVisible": False,
+        "sceneSummary": "พื้นสีขาว",
+        "criteria": [
+            {"id": "[c_duct]", "seen": "สายพาดไขว้", "verdict": "fail", "fix": "จัดสาย"},
+            {"id": "c_lug", "seen": "ไม่มีหางปลา", "verdict": "fail", "fix": "ย้ำหางปลา"},
+        ],
+        "overall": "not-yet", "coach": "x",
+    })
+    assert [c["verdict"] for c in out["criteria"]] == ["unclear", "unclear"], out
+    assert all(not c["fix"] for c in out["criteria"]), "ยังไม่ได้ตรวจ ไม่ควรมีสิ่งที่ต้องแก้"
+    assert out["overall"] == "cannot-judge"
+    assert out["nextShot"], "ต้องบอกวิธีถ่ายใหม่"
+check("มองไม่เห็นชิ้นงาน → ทุกเกณฑ์เป็น 'ไม่ชัด' ห้ามตัดสินว่าผิด", _no_workpiece_never_fails)
+
+def _ids_are_normalised():
+    out = g._guard_inspection({
+        "workpieceVisible": True,
+        "criteria": [{"id": "[c_copper]", "seen": "s", "verdict": "pass"}],
+        "overall": "pass", "coach": "x",
+    })
+    assert out["criteria"][0]["id"] == "c_copper", out
+check("ล้างวงเล็บเหลี่ยมที่โมเดลลอกมาจากรายการเกณฑ์", _ids_are_normalised)
+
+def _overall_follows_criteria():
+    mk = lambda vs: {"workpieceVisible": True, "overall": "pass", "coach": "x",
+                     "criteria": [{"id": str(i), "seen": "s", "verdict": v}
+                                  for i, v in enumerate(vs)]}
+    assert g._guard_inspection(mk(["pass", "pass"]))["overall"] == "pass"
+    assert g._guard_inspection(mk(["pass", "fail"]))["overall"] == "not-yet"
+    assert g._guard_inspection(mk(["pass", "unclear"]))["overall"] == "cannot-judge"
+    # ไม่ชัดสำคัญกว่าไม่ผ่าน เพราะยังตัดสินไม่ได้จริง ๆ
+    assert g._guard_inspection(mk(["fail", "unclear"]))["overall"] == "cannot-judge"
+check("ผลรวมตามผลรายข้อเสมอ ไม่ใช่ความเห็นแยกอีกอัน", _overall_follows_criteria)
+
 
 print(f"\n{fails} FAILURE(S)\n" if fails else "\nall green\n")
 sys.exit(1 if fails else 0)

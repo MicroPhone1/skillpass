@@ -1,0 +1,55 @@
+<style>
+  body{margin:0;background:#fff;font-family:system-ui}
+  .panel{width:640px;height:480px;position:relative;background:#dfe3e8;border:14px solid #9aa3ad}
+  .rail{position:absolute;left:40px;right:40px;height:26px;background:#b9c0c8;border:2px solid #8d959d}
+  .tb{position:absolute;width:34px;height:52px;background:#2f6fbf;border:2px solid #1d4a85;border-radius:3px}
+  .tb.grey{background:#8f979f;border-color:#6b7278}
+  .screw{position:absolute;width:10px;height:10px;border-radius:50%;background:#e8edf2;border:1px solid #9aa3ad}
+  .duct{position:absolute;background:#c8ced4;border:2px solid #a2a9b0}
+  .wire{position:absolute;border-radius:3px}
+  .lug{position:absolute;width:14px;height:8px;background:#c9a227;border-radius:2px}
+  .copper{position:absolute;background:#c0703a;border-radius:2px}
+  .tag{position:absolute;background:#fff;border:1px solid #b6bcc2;font-size:10px;padding:1px 3px}
+</style>
+
+<!-- ตู้ที่เดินสายเรียบร้อย: สายอยู่ในราง เข้าหางปลา ไม่มีทองแดงโผล่ มีป้ายมาร์ก -->
+<div class="panel" id="good">
+  <div class="duct" style="left:40px;top:40px;right:40px;height:54px"></div>
+  <div class="rail" style="top:230px"></div>
+  <div class="tb" style="left:120px;top:217px"></div>
+  <div class="tb" style="left:170px;top:217px"></div>
+  <div class="tb" style="left:220px;top:217px"></div>
+  <div class="tb grey" style="left:270px;top:217px"></div>
+  <div class="wire" style="left:132px;top:96px;width:9px;height:122px;background:#8a5a2b"></div>
+  <div class="wire" style="left:182px;top:96px;width:9px;height:122px;background:#1b1b1b"></div>
+  <div class="wire" style="left:232px;top:96px;width:9px;height:122px;background:#8f979f"></div>
+  <div class="wire" style="left:282px;top:96px;width:9px;height:122px;background:#2d7d46"></div>
+  <div class="lug" style="left:129px;top:214px"></div>
+  <div class="lug" style="left:179px;top:214px"></div>
+  <div class="lug" style="left:229px;top:214px"></div>
+  <div class="lug" style="left:279px;top:214px"></div>
+  <div class="tag" style="left:124px;top:140px">L1</div>
+  <div class="tag" style="left:174px;top:140px">L2</div>
+  <div class="tag" style="left:224px;top:140px">L3</div>
+  <div class="tag" style="left:274px;top:140px">PE</div>
+  <div class="screw" style="left:26px;top:26px"></div>
+  <div class="screw" style="right:26px;top:26px"></div>
+</div>
+
+<!-- ตู้ที่ยังไม่เรียบร้อย: สายลอยนอกราง พาดไขว้ ไม่มีหางปลา ทองแดงโผล่ ไม่มีป้าย -->
+<div class="panel" id="bad" style="margin-top:40px">
+  <div class="duct" style="left:40px;top:40px;right:40px;height:54px"></div>
+  <div class="rail" style="top:230px"></div>
+  <div class="tb" style="left:120px;top:217px"></div>
+  <div class="tb" style="left:170px;top:217px"></div>
+  <div class="tb" style="left:220px;top:217px"></div>
+  <div class="tb grey" style="left:270px;top:217px"></div>
+  <div class="wire" style="left:60px;top:120px;width:300px;height:9px;background:#8a5a2b;transform:rotate(18deg)"></div>
+  <div class="wire" style="left:90px;top:160px;width:280px;height:9px;background:#1b1b1b;transform:rotate(-24deg)"></div>
+  <div class="wire" style="left:150px;top:110px;width:260px;height:9px;background:#8f979f;transform:rotate(41deg)"></div>
+  <div class="wire" style="left:200px;top:150px;width:230px;height:9px;background:#2d7d46;transform:rotate(-9deg)"></div>
+  <div class="copper" style="left:126px;top:200px;width:16px;height:7px"></div>
+  <div class="copper" style="left:176px;top:200px;width:19px;height:7px"></div>
+  <div class="copper" style="left:226px;top:200px;width:14px;height:7px"></div>
+  <div class="screw" style="left:26px;top:26px"></div>
+</div>

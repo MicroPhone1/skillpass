@@ -17,6 +17,7 @@ aigateway.py — ตัวกลางคุยกับผู้ให้บร
 ขอคีย์ฟรีได้ที่ https://aistudio.google.com/apikey
 """
 
+import base64
 import json
 import os
 import re
@@ -63,6 +64,9 @@ class Config:
                         or os.environ.get("GOOGLE_API_KEY") or "").strip()
         self._model = os.environ.get("SKILLPASS_AI_MODEL", "").strip()
         self.ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434").rstrip("/")
+        # โมเดลอ่านภาพแยกจากโมเดลอ่านข้อความ เพราะ ollama ใช้คนละตัว
+        # ฝั่ง gemini ตัวเดียวอ่านได้ทั้งคู่ จึงไม่ต้องสลับ
+        self.vision_model = os.environ.get("SKILLPASS_VISION_MODEL", "qwen2.5vl:7b").strip()
 
     @property
     def model(self):
@@ -256,6 +260,79 @@ ROLES = {
             "ผู้เรียนตอบ: {given}  ({verdict})\n"
             "ทักษะที่ข้อนี้วัด: {skill}\n\n"
             "เนื้อหาอ้างอิงที่เกี่ยวข้อง:\n{sources}"
+        ),
+    },
+
+    # ---------------------------------------------------- ผู้ตรวจชิ้นงานจากภาพ
+    "inspector": {
+        "label": "ผู้ตรวจชิ้นงาน",
+        "temperature": 0.1,          # งานตรวจต้องนิ่ง ไม่ใช่งานสร้างสรรค์
+        "vision": True,              # บทบาทเดียวที่รับภาพได้
+        "system": _BASE + (
+            "\nหน้าที่ของคุณ: ตรวจชิ้นงานภาคปฏิบัติจากภาพถ่าย ตามเกณฑ์ที่ให้มาเท่านั้น\n"
+            "\n"
+            "ลำดับที่ต้องทำเสมอ — ห้ามสลับ:\n"
+            "1. ตอบ sceneSummary ก่อน ว่าในภาพมีอะไรอยู่บ้าง พูดถึงเฉพาะสิ่งที่เห็นจริง\n"
+            "2. ตอบ workpieceVisible ว่าเห็นชิ้นงานที่ต้องตรวจอยู่ในภาพหรือไม่\n"
+            "   ถ้าภาพว่างเปล่า เบลอทั้งภาพ เป็นพื้นสีล้วน หรือเป็นของอย่างอื่น\n"
+            "   ให้ตอบ false แล้วทุกเกณฑ์ต้องเป็น unclear และ overall = cannot-judge\n"
+            "   ห้ามบรรยายชิ้นงานที่ไม่ได้อยู่ในภาพเด็ดขาด นี่คือการกุหลักฐาน\n"
+            "3. บรรยายว่า 'เห็นอะไรในภาพ' ใส่ลง seen ของแต่ละเกณฑ์\n"
+            "4. แล้วจึงตัดสิน verdict จากสิ่งที่บรรยายไว้ ห้ามตัดสินก่อนดู\n"
+            "\n"
+            "id ของแต่ละเกณฑ์ให้ตอบเป็นรหัสเปล่า ๆ เช่น c_duct ห้ามใส่วงเล็บเหลี่ยมครอบ\n"
+            "\n"
+            "กติกากันการตัดสินมั่ว:\n"
+            "- verdict มีสามค่า pass / fail / unclear\n"
+            "- ถ้าภาพไม่ชัด มุมไม่เห็นจุดนั้น หรือชิ้นงานถูกบัง ให้ตอบ unclear เสมอ\n"
+            "  ห้ามตอบ fail เพราะ 'มองไม่เห็น' — มองไม่เห็นกับทำผิดคนละเรื่องกัน\n"
+            "- ห้ามตอบ pass เพราะภาพดูเรียบร้อยหรือดูน่าจะถูก\n"
+            "  ต้องเห็นหลักฐานตรงตามเกณฑ์ข้อนั้นจริง ๆ แล้วเขียนไว้ใน seen\n"
+            "- ตัดสินเฉพาะชิ้นงาน ห้ามให้คุณภาพของภาพ ความสวยของสถานที่ เครื่องแต่งกาย\n"
+            "  หรือตัวบุคคลในภาพมีผลต่อคำตัดสิน\n"
+            "- เกณฑ์ข้อไหนที่ภาพไม่ครอบคลุม ให้ unclear ห้ามเดาจากเกณฑ์ข้ออื่น\n"
+            "\n"
+            "fix = สิ่งที่ต้องแก้ให้ทำครั้งต่อไป บอกเป็นการกระทำที่จับต้องได้\n"
+            "  เช่น 'ขันหางปลาให้แน่นจนสายไม่ขยับเมื่อดึงเบา ๆ' ไม่ใช่ 'ทำให้เรียบร้อยกว่านี้'\n"
+            "  ถ้า verdict เป็น pass ให้เว้น fix ว่าง\n"
+            "nextShot = ถ้ามีข้อไหน unclear ให้บอกวิธีถ่ายใหม่ให้เห็นจุดนั้น (มุม ระยะ แสง)\n"
+            "overall = pass เมื่อทุกข้อเป็น pass · cannot-judge เมื่อมี unclear · not-yet เมื่อมี fail"
+        ),
+        "schema": {
+            "type": "object",
+            "properties": {
+                # สองช่องนี้ต้องมาก่อน criteria เสมอ — โมเดลตอบตามลำดับที่ประกาศ
+                # การบังคับให้สรุปฉากก่อนตัดสิน ช่วยกันการเดาว่าผิดไว้ก่อนได้จริง
+                "sceneSummary": {"type": "string",
+                                 "description": "ในภาพมีอะไรอยู่บ้าง เฉพาะที่เห็นจริง"},
+                "workpieceVisible": {"type": "boolean",
+                                     "description": "เห็นชิ้นงานที่ต้องตรวจในภาพหรือไม่"},
+                "criteria": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "string", "description": "รหัสเกณฑ์จากรายการที่ให้มา"},
+                            "seen": {"type": "string", "description": "สิ่งที่เห็นในภาพจริง ๆ ก่อนตัดสิน"},
+                            "verdict": {"type": "string", "enum": ["pass", "fail", "unclear"]},
+                            "fix": {"type": "string", "description": "สิ่งที่ต้องแก้ เว้นว่างถ้าผ่าน"},
+                        },
+                        "required": ["id", "seen", "verdict"],
+                    },
+                },
+                "overall": {"type": "string", "enum": ["pass", "not-yet", "cannot-judge"]},
+                "nextShot": {"type": "string", "description": "วิธีถ่ายใหม่ ถ้ามีข้อที่มองไม่ชัด"},
+                "coach": {"type": "string", "description": "หนึ่งประโยคบอกว่าควรทำอะไรต่อ"},
+            },
+            "required": ["sceneSummary", "workpieceVisible", "criteria", "overall", "coach"],
+        },
+        "template": (
+            "งานที่ผู้เรียนกำลังฝึก: {drill}\n"
+            "เส้นทาง: {track}\n"
+            "รอบที่: {round}\n\n"
+            "=== เกณฑ์ที่ต้องตรวจ ===\n{criteria}\n=== จบเกณฑ์ ===\n\n"
+            "สิ่งที่ผู้เรียนแก้มาจากรอบก่อน: {previousFix}\n\n"
+            "ตรวจภาพที่แนบมาตามเกณฑ์ข้างบนทีละข้อ"
         ),
     },
 
@@ -567,14 +644,44 @@ def _strip_fence(text):
     return m.group(1) if m else t
 
 
-def call_gemini(role_key, prompt, cfg):
+MAX_IMAGES = 3
+MAX_IMAGE_BYTES = 4 * 1024 * 1024        # ภาพจากกล้องย่อแล้วไม่ควรเกินนี้
+
+
+def _clean_images(raw):
+    """
+    รับ base64 ของภาพจากเบราว์เซอร์ แล้วคัดให้เหลือเฉพาะที่ปลอดภัยจะส่งต่อ
+
+    ตัด data URL prefix ออก จำกัดจำนวนและขนาด และตรวจว่าถอดรหัสได้จริง
+    ภาพที่ถอดไม่ออกคือขยะ ส่งต่อไปก็ได้แต่ error ที่อ่านไม่รู้เรื่องจากฝั่งโมเดล
+    """
+    out = []
+    for item in (raw or [])[:MAX_IMAGES]:
+        if not isinstance(item, str):
+            continue
+        b64 = item.split(",", 1)[1] if item.startswith("data:") else item
+        b64 = b64.strip()
+        if not b64 or len(b64) * 3 // 4 > MAX_IMAGE_BYTES:
+            continue
+        try:
+            base64.b64decode(b64, validate=True)
+        except Exception:
+            continue
+        out.append(b64)
+    return out
+
+
+def call_gemini(role_key, prompt, cfg, images=()):
     role = ROLES[role_key]
     url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
            f"{cfg.model}:generateContent?key={cfg.api_key}")
 
     payload = {
         "systemInstruction": {"parts": [{"text": role["system"]}]},
-        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "contents": [{"role": "user", "parts": (
+            [{"text": prompt}] +
+            [{"inlineData": {"mimeType": "image/jpeg", "data": b}} for b in images]
+        )}],
         "generationConfig": {
             "temperature": role["temperature"],
             "responseMimeType": "application/json",
@@ -621,7 +728,7 @@ def _to_ollama_schema(schema):
 _THINK = re.compile(r"<think>.*?</think>\s*", re.S)
 
 
-def call_ollama(role_key, prompt, cfg):
+def call_ollama(role_key, prompt, cfg, images=()):
     """
     ทางเลือกแบบรันในเครื่อง — ไม่ต้องมีคีย์ ไม่มีโควตา ข้อมูลไม่ออกนอกเครื่อง
     ต้องติดตั้ง Ollama และดึงโมเดลไว้ก่อน (ดู README)
@@ -642,6 +749,13 @@ def call_ollama(role_key, prompt, cfg):
         },
         "keep_alive": "10m",                    # คงโมเดลไว้ในแรม คำขอถัดไปจะเร็วขึ้นมาก
     }
+
+    if images:
+        payload["images"] = list(images)
+        # โมเดลอ่านข้อความกับโมเดลอ่านภาพเป็นคนละตัว ต้องสลับให้ตรงกับงาน
+        payload["model"] = cfg.vision_model
+        # ภาพกินโทเคนเยอะกว่าข้อความมาก ต้องขยายหน้าต่างไม่งั้นโดนตัดกลางคัน
+        payload["options"]["num_ctx"] = 16384
 
     try:
         res = _post_json(f"{cfg.ollama_url}/api/generate", payload, timeout=180)
@@ -716,12 +830,23 @@ def handle(role_key, payload, cfg=CONFIG):
     fields = {k: str(v)[:MAX_FIELD] for k, v in (payload.get("input") or {}).items()}
     prompt = _fill(ROLES[role_key]["template"], fields)
 
+    # ภาพจากกล้อง — รับเฉพาะบทบาทที่ประกาศว่าใช้ภาพ กันไม่ให้ยัดภาพเข้าบทบาทข้อความ
+    images = []
+    if ROLES[role_key].get("vision"):
+        images = _clean_images(payload.get("images"))
+        if not images:
+            return {"ok": False, "error": "no-image",
+                    "message": "บทบาทนี้ต้องมีภาพจากกล้องอย่างน้อยหนึ่งภาพ"}
+
     try:
-        data = PROVIDERS[cfg.provider](role_key, prompt, cfg)
+        data = PROVIDERS[cfg.provider](role_key, prompt, cfg, images)
     except UpstreamError as e:
         return {"ok": False, "error": e.code, "message": e.message}
     except Exception as e:                                   # กันพังทั้งเซิร์ฟเวอร์
         return {"ok": False, "error": "internal", "message": f"เกิดข้อผิดพลาดภายใน: {e}"}
+
+    if role_key == "inspector":
+        data = _guard_inspection(data)
 
     return {
         "ok": True,
@@ -729,10 +854,46 @@ def handle(role_key, payload, cfg=CONFIG):
         "data": data,
         "meta": {
             "provider": cfg.provider,
-            "model": cfg.model,
+            "model": cfg.model if not ROLES[role_key].get("vision") else cfg.vision_model,
             "ms": int((time.time() - started) * 1000),
         },
     }
+
+
+def _guard_inspection(data):
+    """
+    บังคับความสอดคล้องของผลตรวจ ไม่ปล่อยให้ขึ้นกับความเชื่อฟังของโมเดล
+
+    วัดจริงแล้วพบว่าโมเดลตอบ 'ไม่ผ่าน' ทุกข้อกับภาพที่ไม่มีชิ้นงานอยู่เลย
+    พร้อมบรรยายสิ่งที่ไม่มีในภาพ ซึ่งเป็นการตัดสินว่าผิดไว้ก่อน
+    ผู้เรียนที่ถ่ายไม่ติดจะโดนตัดสินว่าทำผิดทั้งที่ยังไม่ได้ถูกตรวจ
+    """
+    if not isinstance(data, dict):
+        return data
+
+    crit = [c for c in (data.get("criteria") or []) if isinstance(c, dict)]
+
+    # โมเดลชอบลอกวงเล็บเหลี่ยมจากรายการเกณฑ์ติดมาด้วย
+    for c in crit:
+        c["id"] = str(c.get("id", "")).strip().strip("[]").strip()
+
+    if data.get("workpieceVisible") is False:
+        for c in crit:
+            c["verdict"] = "unclear"
+            c["fix"] = ""
+        data["overall"] = "cannot-judge"
+        if not data.get("nextShot"):
+            data["nextShot"] = "ถ่ายใหม่ให้เห็นชิ้นงานเต็มกรอบ ห่างประมาณหนึ่งช่วงแขน และให้แสงพอ"
+
+    # ผลรวมต้องสอดคล้องกับผลรายข้อเสมอ ไม่ใช่ความเห็นแยกอีกอัน
+    elif crit:
+        verdicts = {c.get("verdict") for c in crit}
+        data["overall"] = ("cannot-judge" if "unclear" in verdicts
+                           else "not-yet" if "fail" in verdicts
+                           else "pass")
+
+    data["criteria"] = crit
+    return data
 
 
 def health(cfg=CONFIG):
