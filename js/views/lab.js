@@ -7,7 +7,8 @@ import { icon, on, esc, mmss, ring, toast, scoreTone, timeAgo, paint } from '../
 import { state, pushDrill, addXP, questProgress, grantBadge, skillStat, save } from '../store.js';
 import { DRILLS, drillById, drillsFor, MODE_LABEL, MODE_ICON } from '../data/drills.js';
 import { TRACKS, trackById, skillName } from '../data/tracks.js';
-import { PracticeEngine, Metronome } from '../engine/vision.js';
+import { PracticeEngine, Metronome, hasMultipleCameras, savedFacing,
+         shouldMirror } from '../engine/vision.js';
 import { autoIssue, celebrate } from '../certificate.js';
 
 let engine = null;
@@ -242,6 +243,7 @@ function liveView(d){
         <div class="cam-bar">
           <button class="cbtn" data-stop>${icon('stop')} หยุดและดูผล</button>
           ${d.mode === 'tempo' ? `<button class="cbtn" data-metro>${icon('wave')} เมโทรนอม</button>` : ''}
+          ${d.needsMic ? '' : `<button class="cbtn" data-flip hidden>${icon('refresh')} สลับกล้อง</button>`}
         </div>
       </div>
       <p class="tiny muted" style="margin-top:10px;text-align:center">
@@ -315,7 +317,33 @@ function mountLive(root, d, ctx){
     },
   });
 
-  engine.start().catch(err => {
+  /* ปุ่มสลับกล้องโผล่เฉพาะเครื่องที่มีกล้องมากกว่าหนึ่งตัว
+     โน้ตบุ๊กที่มีกล้องหน้าตัวเดียวจะไม่เห็นปุ่มที่กดแล้วไม่เกิดอะไรขึ้น */
+  let revealFlip = null;
+  const flipBtn = root.querySelector('[data-flip]');
+  if (flipBtn){
+    const stage = root.querySelector('#stage');
+    const paintFacing = f => { stage.dataset.mirror = shouldMirror(f) ? '1' : '0'; };
+    paintFacing(savedFacing());
+
+    /* เบราว์เซอร์มือถือหลายตัวไม่ยอมบอกรายชื่อกล้องจนกว่าผู้ใช้จะกดอนุญาตก่อน
+       เช็กครั้งเดียวตอนเปิดหน้าจึงพลาดได้ ต้องเช็กซ้ำหลังกล้องติดแล้วด้วย */
+    revealFlip = () => hasMultipleCameras().then(many => { if (many) flipBtn.hidden = false; });
+    revealFlip();
+
+    flipBtn.addEventListener('click', async () => {
+      flipBtn.disabled = true;
+      const now = await engine.flipCamera();
+      paintFacing(now);
+      flipBtn.disabled = false;
+      toast(now === 'environment' ? 'ใช้กล้องหลังแล้ว' : 'ใช้กล้องหน้าแล้ว', 'ok', 1600);
+    });
+  }
+
+  engine.start().then(() => {
+    // กล้องติดแล้ว ตอนนี้เบราว์เซอร์ยอมบอกรายชื่ออุปกรณ์ครบ เช็กซ้ำให้ปุ่มโผล่ถูกต้อง
+    revealFlip?.();
+  }).catch(err => {
     setCue('เปิดไม่สำเร็จ', 'bad');
     root.querySelector('#stage').innerHTML = `
       <div class="cam-placeholder">

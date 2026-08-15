@@ -28,23 +28,57 @@ const std  = a => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) 
 /* ============================================================
    ตัวช่วย: เปิดกล้อง / ไมค์ พร้อมข้อความผิดพลาดภาษาไทย
    ============================================================ */
-export async function openCamera(){
+/* ด้านกล้องที่เลือกไว้ล่าสุด — จำข้ามครั้งเพราะคนฝึกงานช่างมักใช้กล้องหลังเสมอ
+   ไม่ควรต้องกดสลับใหม่ทุกครั้งที่เข้าบทฝึก */
+const FACE_KEY = 'skillpass.camera.facing';
+export const savedFacing = () => {
+  try { return localStorage.getItem(FACE_KEY) === 'environment' ? 'environment' : 'user'; }
+  catch { return 'user'; }
+};
+export const saveFacing = f => { try { localStorage.setItem(FACE_KEY, f); } catch {} };
+
+/** กล้องหน้าต้องมิเรอร์ให้เหมือนส่องกระจก แต่กล้องหลังห้ามมิเรอร์
+    ไม่งั้นชิ้นงานที่ถ่ายจะกลับซ้ายขวา อ่านตัวหนังสือบนอุปกรณ์ไม่ได้ */
+export const shouldMirror = facing => facing !== 'environment';
+
+/** มีกล้องให้สลับมากกว่าหนึ่งตัวไหม — ใช้ตัดสินว่าจะโชว์ปุ่มสลับหรือไม่ */
+export async function hasMultipleCameras(){
+  try{
+    const list = await navigator.mediaDevices?.enumerateDevices?.() || [];
+    return list.filter(d => d.kind === 'videoinput').length > 1;
+  }catch{ return false; }
+}
+
+export async function openCamera(facing = savedFacing()){
   if (!navigator.mediaDevices?.getUserMedia){
     throw new Error(location.protocol === 'https:' || location.hostname === 'localhost'
       ? 'เบราว์เซอร์นี้ไม่รองรับการใช้งานกล้อง'
       : 'เบราว์เซอร์อนุญาตให้ใช้กล้องเฉพาะเมื่อเปิดผ่าน HTTPS หรือ localhost เท่านั้น — ลองรัน serve.py แล้วเปิดลิงก์ https ที่แสดงในหน้าต่างคำสั่ง');
   }
+  const constraints = f => ({
+    video:{ facingMode:{ ideal:f }, width:{ ideal:640 }, height:{ ideal:480 } },
+    audio:false,
+  });
   try{
-    return await navigator.mediaDevices.getUserMedia({
-      video:{ facingMode:'user', width:{ ideal:640 }, height:{ ideal:480 } },
-      audio:false,
-    });
+    return await navigator.mediaDevices.getUserMedia(constraints(facing));
   }catch(e){
-    if (e.name === 'NotAllowedError') throw new Error('คุณยังไม่ได้อนุญาตให้ใช้กล้อง — กดไอคอนกล้องบนแถบที่อยู่เว็บแล้วเลือก "อนุญาต"');
-    if (e.name === 'NotFoundError')   throw new Error('ไม่พบกล้องบนอุปกรณ์นี้');
-    if (e.name === 'NotReadableError')throw new Error('กล้องถูกโปรแกรมอื่นใช้งานอยู่ ลองปิดแอปที่ใช้กล้องแล้วลองใหม่');
-    throw new Error('เปิดกล้องไม่สำเร็จ: ' + e.message);
+    /* โน้ตบุ๊กส่วนใหญ่มีกล้องหน้าตัวเดียว ขอกล้องหลังแล้วจะไม่เจอ
+       ถอยไปใช้ตัวที่มีดีกว่าขึ้นข้อความว่าเปิดกล้องไม่ได้ทั้งที่มีกล้องอยู่ */
+    if (facing === 'environment' && (e.name === 'OverconstrainedError' || e.name === 'NotFoundError')){
+      saveFacing('user');
+      try { return await navigator.mediaDevices.getUserMedia(constraints('user')); }
+      catch(e2){ throw camError(e2); }
+    }
+    throw camError(e);
   }
+}
+
+/** แปลงข้อผิดพลาดของเบราว์เซอร์เป็นภาษาที่ผู้เรียนแก้ตามได้ */
+function camError(e){
+  if (e.name === 'NotAllowedError') return new Error('คุณยังไม่ได้อนุญาตให้ใช้กล้อง — กดไอคอนกล้องบนแถบที่อยู่เว็บแล้วเลือก "อนุญาต"');
+  if (e.name === 'NotFoundError')   return new Error('ไม่พบกล้องบนอุปกรณ์นี้');
+  if (e.name === 'NotReadableError')return new Error('กล้องถูกโปรแกรมอื่นใช้งานอยู่ ลองปิดแอปที่ใช้กล้องแล้วลองใหม่');
+  return new Error('เปิดกล้องไม่สำเร็จ: ' + e.message);
 }
 
 export async function openMic(){
@@ -115,7 +149,9 @@ export class PracticeEngine{
   async start(){
     if (this.mode === 'voice') return this.startVoice();
 
-    this.stream = await openCamera();
+    this.facing = savedFacing();
+    this.mirror = shouldMirror(this.facing);
+    this.stream = await openCamera(this.facing);
     const v = this.io.video;
     v.srcObject = this.stream;
     v.muted = true; v.playsInline = true;
@@ -153,6 +189,47 @@ export class PracticeEngine{
     this.audioCtx?.close?.();
   }
 
+  /**
+   * สลับกล้องหน้า/หลังระหว่างฝึกโดยไม่ต้องเริ่มบทฝึกใหม่
+   *
+   * เปลี่ยนเฉพาะแหล่งภาพ ไม่แตะสถานะการฝึกที่ทำไปแล้ว
+   * ยกเว้นโหมด steady ที่ต้องจำฉากหลังใหม่ เพราะเปลี่ยนกล้องคือเปลี่ยนฉาก
+   *
+   * @returns {Promise<string>} ด้านกล้องที่ใช้อยู่หลังสลับ
+   */
+  async flipCamera(){
+    if (this.mode === 'voice' || !this.stream) return this.facing;
+
+    const next = this.facing === 'environment' ? 'user' : 'environment';
+    const old = this.stream;
+    let stream;
+    try{
+      stream = await openCamera(next);
+    }catch(e){
+      this.emit('cue', { text:'สลับกล้องไม่สำเร็จ: ' + e.message, tone:'bad' });
+      return this.facing;
+    }
+
+    old?.getTracks().forEach(t => t.stop());
+    this.stream = stream;
+    this.facing = next;
+    this.mirror = shouldMirror(next);
+    saveFacing(next);
+
+    const v = this.io.video;
+    v.srcObject = stream;
+    await v.play().catch(() => {});
+
+    this.bg = null;                       // ฉากหลังเดิมใช้กับกล้องใหม่ไม่ได้
+    this.prev = null;
+    if (this.mode === 'steady' && this.phase === 'run'){
+      this.phase = 'calibrate';
+      this.calibStart = performance.now();
+      this.emit('cue', { text:'เปลี่ยนกล้องแล้ว — ให้กรอบว่างไว้ ระบบกำลังจำฉากหลังใหม่', tone:'' });
+    }
+    return next;
+  }
+
   emit(type, data){ this.io.onEvent?.({ type, ...data }); }
 
   /* ---------------------------------------------------- main loop */
@@ -169,8 +246,14 @@ export class PracticeEngine{
     const v = this.io.video;
     if (!v.videoWidth) return null;
     this.wctx.save();
-    this.wctx.scale(-1, 1);
-    this.wctx.drawImage(v, -W, 0, W, H);
+    /* ต้องกลับภาพให้ตรงกับที่ผู้ใช้เห็นบนจอ ไม่งั้นโหมดโซนกับลำดับขั้นตอน
+       จะสลับซ้ายขวา — กล้องหน้าจอมิเรอร์ ส่วนกล้องหลังไม่มิเรอร์ */
+    if (this.mirror !== false){
+      this.wctx.scale(-1, 1);
+      this.wctx.drawImage(v, -W, 0, W, H);
+    }else{
+      this.wctx.drawImage(v, 0, 0, W, H);
+    }
     this.wctx.restore();
     const d = this.wctx.getImageData(0, 0, W, H).data;
     const g = new Float32Array(W * H);

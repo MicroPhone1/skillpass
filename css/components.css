@@ -230,7 +230,10 @@
   position:relative;background:var(--blue-950);border-radius:var(--r-lg);overflow:hidden;
   aspect-ratio:4/3;box-shadow:var(--sh-3);display:grid;place-items:center;
 }
+/* กล้องหน้ามิเรอร์ให้เหมือนส่องกระจก · กล้องหลังห้ามมิเรอร์
+   ไม่งั้นชิ้นงานกับตัวหนังสือบนอุปกรณ์จะกลับซ้ายขวา */
 .cam-stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.cam-stage[data-mirror="0"] video{transform:none}
 .cam-stage canvas.overlay{position:absolute;inset:0;width:100%;height:100%}
 .cam-placeholder{color:var(--blue-300);text-align:center;padding:26px;z-index:1;max-width:44ch}
 .cam-placeholder > svg{width:46px;height:46px;margin:0 auto 12px;opacity:.6}

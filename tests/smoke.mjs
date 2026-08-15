@@ -1012,5 +1012,32 @@ await check('AI เสนอแผน แล้วครูแก้เองต
   CR.deleteClass(cls.id);
 });
 
+await check('สลับกล้องหน้า/หลังได้ และมิเรอร์ให้ถูกด้าน', async () => {
+  const V = await import(url('js/engine/vision.js'));
+
+  /* กล้องหลังห้ามมิเรอร์ ไม่งั้นชิ้นงานกับตัวหนังสือบนอุปกรณ์กลับซ้ายขวา */
+  if (V.shouldMirror('user') !== true) throw new Error('กล้องหน้าต้องมิเรอร์');
+  if (V.shouldMirror('environment') !== false) throw new Error('กล้องหลังต้องไม่มิเรอร์');
+
+  /* ค่าที่จำไว้ต้องข้ามครั้งได้ และค่าเพี้ยนต้องถอยไปกล้องหน้า */
+  V.saveFacing('environment');
+  if (V.savedFacing() !== 'environment') throw new Error('จำด้านกล้องไม่ได้');
+  V.saveFacing('ขยะ');
+  if (V.savedFacing() !== 'user') throw new Error('ค่าเพี้ยนต้องถอยไปกล้องหน้า');
+  V.saveFacing('user');
+
+  if (typeof V.hasMultipleCameras !== 'function') throw new Error('ไม่มีตัวเช็กจำนวนกล้อง');
+  if (typeof V.PracticeEngine.prototype.flipCamera !== 'function')
+    throw new Error('เอนจินไม่มี flipCamera');
+
+  /* ฝั่ง UI ต้องมีปุ่มและ CSS ที่ปิดมิเรอร์เมื่อใช้กล้องหลัง */
+  const lab = fs.readFileSync(path.join(ROOT, 'js/views/lab.js'), 'utf8');
+  if (!lab.includes('data-flip')) throw new Error('ไม่มีปุ่มสลับกล้องในห้องฝึก');
+  if (!/hasMultipleCameras\(\)/.test(lab)) throw new Error('ไม่ได้ซ่อนปุ่มเมื่อมีกล้องตัวเดียว');
+  const css = fs.readFileSync(path.join(ROOT, 'css/components.css'), 'utf8');
+  if (!css.includes('[data-mirror="0"] video{transform:none}'))
+    throw new Error('CSS ไม่ได้ปิดมิเรอร์ตอนใช้กล้องหลัง');
+});
+
 console.log(fails ? `\n${fails} FAILURE(S)\n` : '\nall green\n');
 process.exit(fails ? 1 : 0);
