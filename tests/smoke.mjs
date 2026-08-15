@@ -1039,5 +1039,37 @@ await check('สลับกล้องหน้า/หลังได้ แ�
     throw new Error('CSS ไม่ได้ปิดมิเรอร์ตอนใช้กล้องหลัง');
 });
 
+await check('ธีมเขียว–ดำ สลับได้และไม่ทำให้ตัวหนังสือจมหาย', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/theme.css'), 'utf8');
+  const skin = css.slice(css.indexOf('[data-skin="green"]{'));
+  if (!skin) throw new Error('ไม่มีสกินเขียวใน theme.css');
+
+  /* สเกล 50–300 ต้องยังเป็นสีอ่อน เพราะโค้ดใช้เขียนบนพื้นเข้ม
+     ถ้าใครกลับด้าน ตัวหนังสือบน hero กับแถบข้างจะหายไปทั้งแถบ */
+  const val = name => (skin.match(new RegExp(`--${name}:\\s*#([0-9A-Fa-f]{6})`)) || [])[1];
+  const lum = hex => {
+    const [r, g, b] = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+      .map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4));
+    return .2126 * r + .7152 * g + .0722 * b;
+  };
+  const light = ['blue-50', 'blue-100', 'blue-200', 'blue-300'].map(n => lum(val(n)));
+  const dark  = ['blue-700', 'blue-800', 'blue-900', 'blue-950'].map(n => lum(val(n)));
+  if (Math.min(...light) <= Math.max(...dark))
+    throw new Error('สเกลสีกลับด้าน: โทน 50–300 ต้องสว่างกว่า 700–950 เสมอ');
+  if (lum(val('ink')) < 0.5) throw new Error('สีตัวหนังสือหลักต้องสว่างบนพื้นดำ');
+  if (lum(val('bg')) > 0.1)  throw new Error('พื้นหลังต้องเข้ม');
+
+  /* แถบบนเดิมเป็นกระจกขาว ถ้าไม่ทับจะกลายเป็นฝ้าขาวกลบหัวเรื่อง */
+  if (!/\[data-skin="green"\] #topbar/.test(css))
+    throw new Error('ไม่ได้ทับพื้นแถบบนของธีมมืด');
+  /* เกียรติบัตรต้องขาวเสมอ เพราะต้องพิมพ์ลงกระดาษ */
+  if (!/\[data-skin="green"\] .cert-paper[^{]*\{background:#fff\}/.test(css.replace(/\s+/g, ' ')))
+    throw new Error('เกียรติบัตรต้องเป็นพื้นขาวแม้อยู่ในธีมมืด');
+
+  const app = fs.readFileSync(path.join(ROOT, 'js/app.js'), 'utf8');
+  if (!app.includes('applySkin()')) throw new Error('ไม่ได้ทาธีมตอนบูต');
+  if (!app.includes('data-skin')) throw new Error('ไม่มีปุ่มสลับธีมในเมนูผู้ใช้');
+});
+
 console.log(fails ? `\n${fails} FAILURE(S)\n` : '\nall green\n');
 process.exit(fails ? 1 : 0);

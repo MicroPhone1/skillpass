@@ -422,3 +422,101 @@ svg[viewBox="0 0 24 24"]{width:20px;height:20px;flex:none}
 /* utility */
 .u-hide{display:none !important}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ============================================================
+   SKIN: เขียว–ดำ
+   ------------------------------------------------------------
+   สลับได้จากเมนูผู้ใช้ · เปลี่ยนที่ token ชั้นเดียว ทุกหน้าจอตามหมด
+   ตั้งใจให้ตัวเลขคอนทราสต์อยู่ในเกณฑ์อ่านง่ายบนโปรเจกเตอร์ห้องมืด
+
+   หลักการแมป: token ตระกูล blue-* ถูกใช้เป็น "ระดับความเข้มของแบรนด์"
+   ไม่ได้ผูกกับสีฟ้าจริง ๆ จึงย้ายมาเป็นเฉดเขียวได้ตรงตัว
+   ส่วน neutrals กลับด้านทั้งชุด เพราะพื้นเปลี่ยนจากขาวเป็นดำ
+   ============================================================ */
+[data-skin="green"]{
+  /* เก็บลำดับ "อ่อน→เข้ม" ของสเกลเดิมไว้ทุกขั้น เปลี่ยนแค่เฉดจากฟ้าเป็นเขียว
+     เพราะโค้ดใช้ 50–300 เป็นสีอ่อน (ตัวหนังสือบนพื้นเข้ม / พื้นชิป)
+     และใช้ 700–950 เป็นสีเข้ม (พื้นไล่เฉดของ hero และแถบข้าง)
+     ถ้ากลับด้าน ตัวหนังสือจะจมหายไปกับพื้นทันที */
+  --blue-950:#031007;
+  --blue-900:#06190B;
+  --blue-800:#0B2A12;
+  --blue-700:#14401D;
+  --blue-600:#8CD211;   /* brand primary */
+  --blue-500:#9BDC1B;
+  --blue-400:#AFE646;
+  --blue-300:#C3EE79;
+  --blue-200:#D5F5A4;
+  --blue-100:#E6FACB;
+  --blue-50: #F2FDE6;
+
+  /* --- neutrals กลับด้านทั้งชุด เพราะพื้นเปลี่ยนจากขาวเป็นดำ --- */
+  --ink:   #EAF6E4;
+  --ink-2: #C2D8B6;
+  --ink-3: #93AC89;
+  --ink-4: #748C6B;
+  --line:  #1F3524;
+  --line-soft:#16261A;
+  --surface:#0B160E;
+  --surface-2:#0F1D12;
+  --bg:    #050B06;
+
+  /* --- semantic ปรับให้สว่างพอบนพื้นดำ --- */
+  --cyan:  #35D6C6; --cyan-soft:#0A2A28;
+  --ok:    #57DD8E; --ok-soft:#0B2A18;
+  --warn:  #FFC24B; --warn-soft:#2C2110;
+  --bad:   #FF7B7B; --bad-soft:#2E1516;
+  --violet:#C39BFF; --violet-soft:#1E1630;
+
+  --sh-1: 0 1px 2px rgba(0,0,0,.5);
+  --sh-2: 0 2px 6px rgba(0,0,0,.45), 0 8px 20px rgba(0,0,0,.35);
+  --sh-3: 0 10px 30px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.4);
+  --sh-blue: 0 8px 22px rgba(140,210,17,.28);
+
+  color-scheme:dark;
+}
+
+/* ปุ่มหลักเป็นเขียวสด ตัวหนังสือต้องเป็นดำถึงจะอ่านออก */
+[data-skin="green"] .btn-primary{color:#04180A}
+[data-skin="green"] .btn-primary svg{color:#04180A}
+
+/* แถบข้างเดิมไล่เฉดจากน้ำเงิน ในสกินนี้ให้เป็นดำอมเขียวแทน */
+[data-skin="green"] #sidebar{
+  background:linear-gradient(178deg,#0A1A0E 0%,#071209 55%,#040C06 100%);
+  border-right:1px solid var(--line);
+}
+[data-skin="green"] #sidebar::after{background-image:radial-gradient(rgba(140,210,17,.30) 1px,transparent 1px)}
+
+/* พื้นหลังหัวเรื่องใหญ่ที่เดิมเป็นน้ำเงินเข้ม */
+[data-skin="green"] .hero{
+  background:linear-gradient(140deg,#0C2412 0%,#071309 60%,#050D07 100%);
+  border:1px solid var(--line);
+}
+
+/* เกียรติบัตรเป็นเอกสารทางการ ต้องพิมพ์ลงกระดาษขาวได้เหมือนเดิม
+   จึงไม่ให้สกินมืดไปเปลี่ยนสีในใบ */
+[data-skin="green"] .cert-paper,[data-skin="green"] #print-host{background:#fff}
+
+/* ชิปที่เดิมเป็น "พื้นฟ้าอ่อน + ตัวหนังสือฟ้าเข้ม" ถ้าปล่อยตรง ๆ บนธีมมืด
+   จะกลายเป็นแผ่นเขียวสว่างจ้าเต็มหน้า ลดความสว่างพื้นลงแล้วดันตัวหนังสือให้อ่อนแทน */
+[data-skin="green"] .btn-soft,
+[data-skin="green"] .pill.plain,
+[data-skin="green"] .src-chip,
+[data-skin="green"] .um-count,
+[data-skin="green"] .nav-badge,
+[data-skin="green"] .dd-opt:hover,
+[data-skin="green"] .dd-opt:focus-visible,
+[data-skin="green"] .tabbar button:hover{
+  background:#14301A;color:var(--blue-300);border-color:#244A2C;
+}
+[data-skin="green"] .btn-ghost:hover{background:#14301A;color:var(--blue-300);border-color:#2E5C39}
+[data-skin="green"] .explain h4,
+[data-skin="green"] .msg .bub h5{color:var(--blue-300)}
+[data-skin="green"] .stat-chip{background:#14301A;border-color:#244A2C;color:var(--blue-200)}
+
+/* แถบบนของเดิมเป็นกระจกขาวโปร่ง ซึ่งบนธีมมืดจะกลายเป็นฝ้าขาวทับพื้นดำ
+   ทำให้หัวเรื่องสีอ่อนจมหายไป ต้องเปลี่ยนเป็นกระจกดำอมเขียวแทน */
+[data-skin="green"] #topbar{
+  background:rgba(6,18,9,.88);
+  border-bottom:1px solid var(--line);
+}
