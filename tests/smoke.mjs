@@ -977,5 +977,40 @@ await check('gateway สั่ง AI ตามเกณฑ์เดียวก�
   }
 });
 
+await check('AI เสนอแผน แล้วครูแก้เองต่อได้จริง', () => {
+  const cls = CR.createClass({ name:'ทดสอบแผน', trackId:'electrician', term:'1/2569' }).cls;
+
+  CR.savePlan(cls.id, { source:'ai', weeks:[
+    { week:1, title:'ร่างจาก AI 1', objective:'o1', theory:'t1', activity:'a1', assessment:'s1', skillIds:[] },
+    { week:2, title:'ร่างจาก AI 2', objective:'o2', theory:'t2', activity:'a2', assessment:'s2', skillIds:[] },
+  ]});
+
+  const before = CR.classById(cls.id).plan.weeks[0];
+  if (before.editedAt) throw new Error('สัปดาห์ที่ AI ร่างไม่ควรถูกนับว่าครูแก้แล้ว');
+  if (CR.editedWeekCount(CR.classById(cls.id)) !== 0) throw new Error('ยังไม่ควรมีสัปดาห์ที่ครูแก้');
+
+  /* ครูแก้ → ต้องบันทึกและติดตราว่าผ่านมือครูแล้ว */
+  CR.editPlanWeek(cls.id, 1, { title:'ครูปรับเอง', activity:'พาไปดูตู้จริงที่โรงฝึก' });
+  const after = CR.classById(cls.id).plan.weeks[0];
+  if (after.title !== 'ครูปรับเอง') throw new Error('ไม่ได้บันทึกหัวข้อที่ครูแก้');
+  if (after.activity !== 'พาไปดูตู้จริงที่โรงฝึก') throw new Error('ไม่ได้บันทึกกิจกรรมที่ครูแก้');
+  if (!after.editedAt) throw new Error('ไม่ได้ติดตราว่าครูแก้แล้ว');
+  if (after.objective !== 'o1') throw new Error('ฟิลด์ที่ไม่ได้แก้ต้องคงเดิม');
+  if (CR.editedWeekCount(CR.classById(cls.id)) !== 1) throw new Error('นับสัปดาห์ที่ครูแก้ผิด');
+
+  /* หัวข้อว่างต้องไม่ผ่าน ไม่งั้นแผนจะมีสัปดาห์ไร้ชื่อ */
+  if (CR.editPlanWeek(cls.id, 1, { title:'   ' })) throw new Error('ยอมรับหัวข้อว่าง');
+
+  /* เพิ่ม/ลบสัปดาห์ แล้วเลขต้องเรียงต่อเนื่องเสมอ */
+  CR.addPlanWeek(cls.id);
+  if (CR.classById(cls.id).plan.weeks.length !== 3) throw new Error('เพิ่มสัปดาห์ไม่สำเร็จ');
+  CR.removePlanWeek(cls.id, 2);
+  const weeks = CR.classById(cls.id).plan.weeks;
+  if (weeks.map(w => w.week).join(',') !== '1,2') throw new Error('เลขสัปดาห์ไม่เรียงใหม่หลังลบ: ' + weeks.map(w => w.week));
+  if (weeks[0].title !== 'ครูปรับเอง') throw new Error('ลบผิดสัปดาห์');
+
+  CR.deleteClass(cls.id);
+});
+
 console.log(fails ? `\n${fails} FAILURE(S)\n` : '\nall green\n');
 process.exit(fails ? 1 : 0);

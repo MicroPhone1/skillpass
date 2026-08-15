@@ -1173,3 +1173,6 @@ html.tour-open{overflow:hidden}
 .coach-reveal > summary:hover{background:var(--blue-50)}
 .coach-reveal > summary:focus-visible{outline:2px solid var(--blue-600);outline-offset:2px}
 .coach-reveal[open] > summary{margin-bottom:8px;border-style:solid;color:var(--ink-3);border-color:var(--line)}
+
+/* สัปดาห์ที่ครูปรับเองแล้ว — ให้เห็นทันทีว่าอันไหนผ่านสายตาครูจริง */
+.week-card.week-edited{border-left:3px solid var(--ok)}

@@ -239,6 +239,62 @@ export function savePlan(classId, plan){
   return c.plan;
 }
 
+/**
+ * ครูแก้สัปดาห์หนึ่งของแผนที่ AI ร่างมา
+ *
+ * AI เป็นคน "เสนอ" ครูเป็นคน "ตัดสิน" — ระบบจึงต้องจำว่าสัปดาห์ไหนครูแตะแล้ว
+ * เพื่อ 1) แสดงให้เห็นว่าอันไหนผ่านสายตาครูจริง
+ *      2) เตือนก่อนร่างใหม่ว่าจะทับของที่ครูแก้ไว้
+ *
+ * @param {string} classId
+ * @param {number} week   เลขสัปดาห์ที่จะแก้
+ * @param {object} patch  ฟิลด์ที่แก้ (title, objective, theory, activity, assessment)
+ */
+export function editPlanWeek(classId, week, patch){
+  const c = classById(classId);
+  const w = c?.plan?.weeks?.find(x => x.week === week);
+  if (!w) return null;
+
+  const clean = {};
+  for (const k of ['title', 'objective', 'theory', 'activity', 'assessment']){
+    if (typeof patch[k] === 'string') clean[k] = patch[k].trim().slice(0, 400);
+  }
+  if (!clean.title) return null;                 // อย่างน้อยต้องมีหัวข้อ
+
+  Object.assign(w, clean, { editedAt: Date.now() });
+  write();
+  return w;
+}
+
+/** ลบสัปดาห์ออกจากแผน แล้วเรียงเลขสัปดาห์ใหม่ให้ต่อเนื่อง */
+export function removePlanWeek(classId, week){
+  const c = classById(classId);
+  if (!c?.plan?.weeks) return null;
+  c.plan.weeks = c.plan.weeks.filter(w => w.week !== week)
+                             .map((w, i) => ({ ...w, week: i + 1 }));
+  write();
+  return c.plan;
+}
+
+/** เพิ่มสัปดาห์เปล่าท้ายแผน ให้ครูเขียนเองทั้งอัน */
+export function addPlanWeek(classId){
+  const c = classById(classId);
+  if (!c?.plan) return null;
+  c.plan.weeks = c.plan.weeks || [];
+  c.plan.weeks.push({
+    week: c.plan.weeks.length + 1,
+    title: 'สัปดาห์ที่ครูเพิ่มเอง',
+    objective: '', theory: '', activity: '', assessment: '',
+    skillIds: [], editedAt: Date.now(),
+  });
+  write();
+  return c.plan;
+}
+
+/** จำนวนสัปดาห์ที่ครูแก้เองแล้ว ใช้เตือนก่อนร่างทับ */
+export const editedWeekCount = cls =>
+  (cls?.plan?.weeks || []).filter(w => w.editedAt).length;
+
 /** ล้างข้อมูลชั้นเรียนทั้งหมดบนเครื่อง (ใช้ตอนทดสอบ/รีเซ็ต) */
 export function resetClasses(){
   cache = [];

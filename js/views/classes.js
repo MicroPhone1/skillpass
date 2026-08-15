@@ -14,7 +14,8 @@ import { TRACKS, trackById, skillName, skillsOf } from '../data/tracks.js';
 import { trackReadiness, weakestSkill } from '../engine/adaptive.js';
 import { DAYS, DAY_SHORT, allClasses, classById, classesTaughtBy, classesJoinedBy,
          createClass, deleteClass, addStudent, removeStudent, joinByCode,
-         addSlot, removeSlot, scheduleByDay, weeklyHours, nextSlot, savePlan } from '../classroom.js';
+         addSlot, removeSlot, scheduleByDay, weeklyHours, nextSlot, savePlan,
+         editPlanWeek, removePlanWeek, addPlanWeek, editedWeekCount } from '../classroom.js';
 import { planLessons, analyseClass } from '../ai/roles.js';
 import { sourceBadge } from '../ai/presentation.js';
 import { assistantPanel, mountAssistant } from '../ai/assistant.js';
@@ -173,9 +174,32 @@ export default {
       ctx.go('classes');
     });
 
-    /* ---------- AI ---------- */
+    /* ---------- แผนการสอน: AI เสนอ ครูตัดสิน ---------- */
+    on(root, 'click', '[data-edit-week]', (e, t) => {
+      openEditWeek(cls, +t.dataset.editWeek, again);
+    });
+
+    on(root, 'click', '[data-del-week]', (e, t) => {
+      const n = +t.dataset.delWeek;
+      if (!confirm(`ลบสัปดาห์ที่ ${n} ออกจากแผน?\nสัปดาห์ที่เหลือจะเลื่อนเลขขึ้นให้อัตโนมัติ`)) return;
+      removePlanWeek(cls.id, n);
+      planCache.delete(cls.id);
+      toast('ลบสัปดาห์แล้ว', 'ok');
+      again();
+    });
+
+    on(root, 'click', '[data-add-week]', () => {
+      const p = addPlanWeek(cls.id);
+      planCache.delete(cls.id);
+      if (p) openEditWeek(cls, p.weeks.length, again);
+    });
+
     on(root, 'click', '[data-make-plan]', async (e, btn) => {
       const weeks = +(root.querySelector('#plan-weeks')?.value || 8);
+      /* ร่างใหม่จะทับของที่ครูแก้ไว้ ต้องถามก่อน ไม่ใช่ลบเงียบ ๆ */
+      const n = editedWeekCount(cls);
+      if (n && !confirm(
+        `คุณปรับเองไว้ ${n} สัปดาห์\nร่างใหม่จะทับทั้งหมดและกู้คืนไม่ได้ ยืนยันหรือไม่?`)) return;
       await busy(btn, 'กำลังร่างแผน…', async () => {
         const profile = rosterOf(cls).filter(s => s.hasData)
           .map(s => `- ${s.name}: ความพร้อม ${s.readiness}% อ่อนเรื่อง ${s.weak}`).join('\n');
@@ -520,6 +544,7 @@ function scheduleTab(cls, teacher){
 /* ---------------------------------------------------- แท็บแผนการสอน */
 function planTab(cls, teacher){
   const plan = planCache.get(cls.id) || cls.plan;
+  const edited = (plan?.weeks || []).filter(w => w.editedAt).length;
 
   return `
   <section class="card">
@@ -552,25 +577,45 @@ function planTab(cls, teacher){
 
       <div class="stack" style="gap:12px">
         ${plan.weeks.map(w => `
-          <div class="week-card">
+          <div class="week-card${w.editedAt ? ' week-edited' : ''}">
             <div class="week-no">
               <span class="tiny">สัปดาห์</span>
               <b>${w.week}</b>
             </div>
             <div class="week-body">
-              <b class="week-title">${esc(w.title)}</b>
-              <p class="small muted" style="line-height:1.65">${icon('target')} ${esc(w.objective)}</p>
+              <div class="row" style="justify-content:space-between;gap:8px;align-items:flex-start">
+                <b class="week-title">${esc(w.title)}</b>
+                <div class="row tight" style="flex:none">
+                  <span class="pill ${w.editedAt ? 'ok' : 'plain'}">
+                    ${w.editedAt ? `${icon('check')} ครูปรับแล้ว` : `${icon('spark')} AI ร่าง`}
+                  </span>
+                  ${teacher ? `
+                    <button class="btn btn-ghost btn-sm" data-edit-week="${w.week}">${icon('wrench')} แก้</button>
+                    <button class="btn btn-ghost btn-sm" data-del-week="${w.week}"
+                            aria-label="ลบสัปดาห์ที่ ${w.week}">${icon('x')}</button>` : ''}
+                </div>
+              </div>
+              ${w.objective ? `<p class="small muted" style="line-height:1.65">${icon('target')} ${esc(w.objective)}</p>` : ''}
               <div class="week-grid">
-                <div><span class="tiny muted">ภาคทฤษฎี</span><p class="small">${esc(w.theory)}</p></div>
-                <div><span class="tiny muted">กิจกรรมลงมือทำ</span><p class="small">${esc(w.activity)}</p></div>
-                <div><span class="tiny muted">วัดผล</span><p class="small">${esc(w.assessment)}</p></div>
+                <div><span class="tiny muted">ภาคทฤษฎี</span><p class="small">${esc(w.theory) || '—'}</p></div>
+                <div><span class="tiny muted">กิจกรรมลงมือทำ</span><p class="small">${esc(w.activity) || '—'}</p></div>
+                <div><span class="tiny muted">วัดผล</span><p class="small">${esc(w.assessment) || '—'}</p></div>
               </div>
               ${w.skillIds?.length ? `<div class="row tight" style="margin-top:9px">
                 ${w.skillIds.map(id => `<span class="pill">${esc(skillName(cls.trackId, id))}</span>`).join('')}
               </div>` : ''}
             </div>
           </div>`).join('')}
-      </div>`
+      </div>
+
+      ${teacher ? `
+      <div class="row" style="margin-top:14px;gap:10px;align-items:center">
+        <button class="btn btn-soft btn-sm" data-add-week>${icon('plus')} เพิ่มสัปดาห์เอง</button>
+        <span class="tiny muted">
+          ${edited ? `ครูปรับเองแล้ว ${edited} จาก ${plan.weeks.length} สัปดาห์`
+                   : 'ทั้งหมดยังเป็นร่างของ AI — กด "แก้" เพื่อปรับให้เข้ากับห้องจริง'}
+        </span>
+      </div>` : ''}`
     : `<div class="empty" style="padding:36px 16px">
         ${icon('book')}
         <h3>ยังไม่มีแผนการสอน</h3>
@@ -652,6 +697,49 @@ function openJoin(done){
   m.el.querySelector('#j-go').addEventListener('click', go);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
   input.focus();
+}
+
+/**
+ * แก้สัปดาห์หนึ่งของแผน — ครูเป็นคนตัดสินใจขั้นสุดท้ายเสมอ
+ * ตั้งใจให้เป็นช่องข้อความเปล่า ๆ ไม่บังคับรูปแบบ เพราะครูแต่ละคนเขียนแผนไม่เหมือนกัน
+ */
+function openEditWeek(cls, week, done){
+  const w = (cls.plan?.weeks || []).find(x => x.week === week);
+  if (!w) return;
+
+  const m = modal(`
+    <h2>สัปดาห์ที่ ${week}</h2>
+    <p class="small muted" style="margin-top:4px">
+      ${w.editedAt ? 'คุณเคยปรับสัปดาห์นี้แล้ว' : 'ตอนนี้เป็นร่างของ AI — ปรับให้ตรงกับห้องจริงได้เลย'}</p>
+    <div class="form-grid" style="margin-top:18px">
+      <div class="span-2">${field({ id:'w-title', label:'หัวข้อสัปดาห์', required:true, value:w.title })}</div>
+      <div class="span-2">${field({ id:'w-obj', label:'วัตถุประสงค์', value:w.objective || '' })}</div>
+      <div class="span-2">${field({ id:'w-theory', label:'ภาคทฤษฎี', value:w.theory || '' })}</div>
+      <div class="span-2">${field({ id:'w-act', label:'กิจกรรมลงมือทำ', value:w.activity || '' })}</div>
+      <div class="span-2">${field({ id:'w-assess', label:'วิธีวัดผล', value:w.assessment || '' })}</div>
+    </div>
+    <p class="auth-error" id="w-err" hidden></p>
+    <div class="row" style="justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost" data-close>ยกเลิก</button>
+      <button class="btn btn-primary" id="w-save">${icon('check')} บันทึกของครู</button>
+    </div>`, { label:`แก้สัปดาห์ที่ ${week}` });
+
+  m.el.querySelector('#w-save').addEventListener('click', () => {
+    const g = id => m.el.querySelector('#' + id).value;
+    if (!g('w-title').trim()){
+      const b = m.el.querySelector('#w-err');
+      b.hidden = false; b.textContent = 'ใส่หัวข้อสัปดาห์ด้วยครับ';
+      return;
+    }
+    editPlanWeek(cls.id, week, {
+      title: g('w-title'), objective: g('w-obj'), theory: g('w-theory'),
+      activity: g('w-act'), assessment: g('w-assess'),
+    });
+    planCache.delete(cls.id);
+    m.close();
+    toast(`บันทึกสัปดาห์ที่ ${week} แล้ว`, 'ok');
+    done();
+  });
 }
 
 function openAddStudent(cls, done){
