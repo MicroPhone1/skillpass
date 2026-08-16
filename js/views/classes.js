@@ -456,11 +456,11 @@ function rosterTab(cls, teacher){
           <div class="stack" style="gap:9px">
             ${analysis.teachToAll.map((x, i) => `
               <div class="quest">
-                <div class="q-ico" style="background:var(--blue-600);color:#fff">${i + 1}</div>
+                <div class="q-ico" style="background:var(--brand-600);color:#fff">${i + 1}</div>
                 <div class="q-body">
                   <b>${esc(x.topic)}</b>
                   <span>${esc(x.reason)}</span>
-                  <span style="color:var(--blue-700);margin-top:3px">${icon('arrowR')} ${esc(x.suggestion)}</span>
+                  <span style="color:var(--brand-700);margin-top:3px">${icon('arrowR')} ${esc(x.suggestion)}</span>
                 </div>
               </div>`).join('')}
           </div>

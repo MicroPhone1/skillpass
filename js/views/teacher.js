@@ -127,8 +127,8 @@ export default {
               ${radarChart(
                 t.skills.map(s => s.short),
                 [
-                  { name:'เกณฑ์ผ่าน', values: t.skills.map(() => 0.8), color:'var(--blue-200)', fill:.3, dots:false },
-                  { name:'ค่าเฉลี่ยห้อง', values: t.skills.map(s => COHORT.classMastery[s.id] ?? .5), color:'var(--blue-600)', fill:.24 },
+                  { name:'เกณฑ์ผ่าน', values: t.skills.map(() => 0.8), color:'var(--brand-200)', fill:.3, dots:false },
+                  { name:'ค่าเฉลี่ยห้อง', values: t.skills.map(s => COHORT.classMastery[s.id] ?? .5), color:'var(--brand-600)', fill:.24 },
                 ], { size: 280 })}
             </div>
           </div>
@@ -148,7 +148,7 @@ export default {
         </div>
       </section>
 
-      <section class="card" style="background:var(--blue-50);border-color:var(--blue-200)">
+      <section class="card" style="background:var(--brand-50);border-color:var(--brand-200)">
         <div class="card-head">
           <div class="track-ico" style="background:#fff">${icon('teacher')}</div>
           <div>
@@ -219,7 +219,7 @@ export default {
         <div class="stack" style="gap:12px;margin-top:18px">
           ${weak.map(([id, m], i) => `
             <div class="quest">
-              <div class="q-ico" style="background:var(--blue-600);color:#fff;font-weight:700">${i + 1}</div>
+              <div class="q-ico" style="background:var(--brand-600);color:#fff;font-weight:700">${i + 1}</div>
               <div class="q-body">
                 <b>${esc(skillName(COHORT.track, id))}</b>
                 <span>ค่าเฉลี่ยห้องอยู่ที่ ${Math.round(m*100)}% (เกณฑ์ผ่าน 80%) ·

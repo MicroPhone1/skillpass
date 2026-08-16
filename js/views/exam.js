@@ -123,7 +123,7 @@ function setupView(p){
       <div class="card-head"><div><h2>เอนจินปรับระดับทำงานอย่างไร</h2></div></div>
       <div class="stack" style="gap:12px">
         <div class="row" style="gap:12px;align-items:flex-start">
-          <div class="q-ico" style="background:var(--blue-50);color:var(--blue-600)">${icon('target')}</div>
+          <div class="q-ico" style="background:var(--brand-50);color:var(--brand-600)">${icon('target')}</div>
           <div style="flex:1"><b style="font-size:14px">เลือกข้อที่ให้ข้อมูลมากที่สุด</b>
             <p class="small muted">ใช้โมเดล IRT (Rasch) คำนวณว่าข้อไหนจะบอกระดับความสามารถของคุณได้ชัดที่สุด ณ ตอนนั้น</p></div>
         </div>
@@ -197,7 +197,7 @@ function runView(){
       ${S.timeLimit ? `<div class="timer num" id="timer">${mmss(S.remaining)}</div>` : ''}
       <div style="text-align:right">
         <div class="tiny muted">ความมั่นใจในการวัด</div>
-        <div class="small num" style="font-weight:700;color:var(--blue-600)">${conf}%</div>
+        <div class="small num" style="font-weight:700;color:var(--brand-600)">${conf}%</div>
       </div>
       <button class="btn btn-ghost btn-sm" data-quit>${icon('x')} ออก</button>
     </div>
@@ -432,7 +432,7 @@ function explainBlock(rec, r){
     <details class="coach-reveal"${r.probe ? '' : ' open'}>
       <summary>${r.probe ? 'คิดแล้ว ขอดูวิธีทำทีละขั้น' : 'วิธีทำทีละขั้น'}</summary>
       ${r.blocks.map(b => `
-        ${b.h ? `<div class="small" style="font-weight:700;color:var(--blue-800);margin-top:10px">${esc(b.h)}</div>` : ''}
+        ${b.h ? `<div class="small" style="font-weight:700;color:var(--brand-800);margin-top:10px">${esc(b.h)}</div>` : ''}
         ${b.list ? `<ol class="steps">${b.list.map(s => `<li>${esc(s)}</li>`).join('')}</ol>`
                   : `<p class="small" style="line-height:1.75;margin-top:4px">${esc(b.text)}</p>`}
       `).join('')}
@@ -538,7 +538,7 @@ function resultView(){
       </div>
     </section>
 
-    <section class="card" style="background:var(--blue-50);border-color:var(--blue-200)">
+    <section class="card" style="background:var(--brand-50);border-color:var(--brand-200)">
       <div class="card-head">
         <div class="track-ico" style="background:#fff">${icon('target')}</div>
         <div><h2>ก้าวต่อไปที่แนะนำ</h2><p>อ้างอิงจากจุดอ่อนที่เจอในรอบนี้</p></div>

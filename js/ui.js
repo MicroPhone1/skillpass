@@ -347,12 +347,15 @@ export function timeAgo(ts){
   return new Date(ts).toLocaleDateString('th-TH', { day:'numeric', month:'short' });
 }
 
-/** Deterministic pastel-on-blue avatar colour from a name. */
+/** สีอวาตาร์จากชื่อ คนเดิมได้สีเดิมเสมอ
+    เฉดวนอยู่ในช่วงเขียว–เขียวอมเหลือง–เขียวอมฟ้า ให้เข้าชุดกับธีมเขียว–ขาว
+    ความสว่างคุมไว้ 28–32% เพราะเขียวสว่างกว่าน้ำเงินที่เคยใช้มาก
+    ถ้าปล่อยสว่างกว่านี้ ตัวย่อสีขาวบนอวาตาร์จะตกเกณฑ์คอนทราสต์ทันที */
 export function avatarColor(name){
   let h = 0;
   for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) % 360;
-  const hues = [214, 200, 228, 190, 250, 176];
-  return `hsl(${hues[h % hues.length]} 62% ${42 + (h % 3) * 7}%)`;
+  const hues = [104, 88, 132, 76, 148, 116];
+  return `hsl(${hues[h % hues.length]} 52% ${28 + (h % 3) * 2}%)`;
 }
 export const initials = name => String(name).trim().slice(0, 2);
 
@@ -405,7 +408,7 @@ export function field(o){
 export function scoreTone(v){
   return v >= 75 ? 'ok' : v >= 50 ? 'warn' : 'bad';
 }
-export const toneColor = t => ({ ok:'var(--ok)', warn:'var(--warn)', bad:'var(--bad)' }[t] || 'var(--blue-600)');
+export const toneColor = t => ({ ok:'var(--ok)', warn:'var(--warn)', bad:'var(--bad)' }[t] || 'var(--brand-600)');
 
 /* ============================================================
    Tiny SVG charts (no library, theme-aware, responsive)
@@ -418,7 +421,7 @@ export function ring(value, { size = 92, stroke = 9, label = '', sub = '', color
   const col = color || toneColor(scoreTone(value * 100));
   return `<div class="ring" style="width:${size}px;height:${size}px">
     <svg width="${size}" height="${size}" aria-hidden="true">
-      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--blue-100)" stroke-width="${stroke}"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--brand-100)" stroke-width="${stroke}"/>
       <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${stroke}"
         stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"
         style="transition:stroke-dashoffset .7s cubic-bezier(.2,.7,.3,1)"/>
@@ -469,7 +472,7 @@ export function radarChart(axes, series, { size = 300 } = {}){
 }
 
 /** Sparkline for a series of 0..100 values. */
-export function sparkline(vals, { w = 220, h = 56, color = 'var(--blue-500)' } = {}){
+export function sparkline(vals, { w = 220, h = 56, color = 'var(--brand-500)' } = {}){
   if (!vals.length) return '';
   const max = 100, min = 0, n = vals.length;
   const x = i => (i / Math.max(1, n - 1)) * (w - 6) + 3;

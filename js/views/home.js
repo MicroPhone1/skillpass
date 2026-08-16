@@ -59,7 +59,7 @@ export default {
           </div>
           <div style="text-align:center;flex:none">
             ${ring(rd/100, { size:118, stroke:11, label:rd + '%', sub:'ความพร้อม', color:'#fff' })}
-            <div class="tiny" style="color:var(--blue-200);margin-top:6px;font-weight:600">${band.label}</div>
+            <div class="tiny" style="color:var(--brand-200);margin-top:6px;font-weight:600">${band.label}</div>
           </div>
         </div>
       </section>
@@ -154,7 +154,7 @@ export default {
       </section>
 
       <!-- ===== curiosity ===== -->
-      <section class="card" style="background:linear-gradient(120deg,var(--blue-50),var(--surface));border-color:var(--blue-200)">
+      <section class="card" style="background:linear-gradient(120deg,var(--brand-50),var(--surface));border-color:var(--brand-200)">
         <div class="card-head">
           <div class="track-ico" style="background:var(--surface);color:var(--warn)">${icon('bulb')}</div>
           <div style="flex:1">

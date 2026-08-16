@@ -42,11 +42,11 @@ export default {
       <section class="passport">
         <div class="spread" style="align-items:flex-start;gap:18px;flex-wrap:wrap">
           <div style="flex:1;min-width:min(100%,260px)">
-            <div class="tiny" style="color:var(--blue-200);letter-spacing:2px;text-transform:uppercase;font-weight:700">
+            <div class="tiny" style="color:var(--brand-200);letter-spacing:2px;text-transform:uppercase;font-weight:700">
               Check Chang · สมุดบันทึกทักษะ
             </div>
             <h2 style="font-size:26px;font-weight:700;letter-spacing:-.6px;margin-top:10px">${esc(displayName())}</h2>
-            <p class="small" style="color:var(--blue-200)">${esc(state.profile.school || 'ยังไม่ได้ระบุสถาบัน')}</p>
+            <p class="small" style="color:var(--brand-200)">${esc(state.profile.school || 'ยังไม่ได้ระบุสถาบัน')}</p>
             <div class="row tight" style="margin-top:14px">
               <span class="pill" style="background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.28);color:#fff">
                 ${icon('bolt')} เลเวล ${lv.level}</span>
@@ -69,7 +69,7 @@ export default {
              ['เส้นทางที่เรียน', state.enrolled.length + ' สาย'],
              ['ประสบการณ์', state.xp + ' XP']].map(([k, v]) => `
             <div>
-              <div class="tiny" style="color:var(--blue-200)">${k}</div>
+              <div class="tiny" style="color:var(--brand-200)">${k}</div>
               <div style="font-size:20px;font-weight:700;letter-spacing:-.5px">${v}</div>
             </div>`).join('')}
         </div>

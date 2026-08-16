@@ -4,7 +4,7 @@
 
 import { $, icon, on, esc, toast, avatar, clearListeners } from './ui.js';
 import { state, save, flush, onChange, emitChange, checkIn, levelInfo,
-         setRole, resetAll, displayName, setSkin, applySkin } from './store.js';
+         setRole, resetAll, displayName } from './store.js';
 import { restoreSession, currentUser, logout } from './auth.js';
 
 import * as authView from './views/auth.js';
@@ -199,10 +199,6 @@ function paintUser(){
       ${state.certificates.length ? `<span class="um-count">${state.certificates.length}</span>` : ''}</a>
     <a class="um-item" href="#/passport">${icon('medal')} สมุดทักษะ</a>
     <div class="um-sep"></div>
-    <button class="um-item" data-skin>${icon('spark')}
-      ธีม${state.skin === 'green' ? 'ฟ้า–ขาว' : 'เขียว–ดำ'}
-      <span class="um-count" style="background:${state.skin === 'green' ? 'var(--blue-600)' : '#8CD211'};color:#04180A">
-        ${state.skin === 'green' ? 'สลับกลับ' : 'ลองดู'}</span></button>
     <button class="um-item" data-tour-replay>${icon('spark')} ดูวิธีใช้งานอีกครั้ง</button>
     <div class="um-sep"></div>
     <button class="um-item danger" data-logout>${icon('arrowR')} ออกจากระบบ</button>`;
@@ -248,8 +244,6 @@ function startApp(user){
 
 /* ------------------------------------------------------------ boot */
 function boot(){
-  // ทาธีมก่อนวาดอะไรทั้งสิ้น ไม่งั้นจะเห็นพื้นขาวแวบหนึ่งก่อนเปลี่ยนเป็นดำ
-  applySkin();
 
   /* --- ปุ่มบน shell ผูกครั้งเดียวตอนบูต --- */
   $('#menu-btn').addEventListener('click', openDrawer);
@@ -267,12 +261,6 @@ function boot(){
   on(document, 'click', '.um-item', closeMenu);
 
   /* เมนูต้องปิดสนิทก่อน ไม่งั้นทัวร์จะไปวัดตำแหน่งปุ่มที่ยังถูกเมนูบังอยู่ */
-  on(document, 'click', '[data-skin]', () => {
-    const now = setSkin(state.skin === 'green' ? 'blue' : 'green');
-    closeMenu();
-    paintUser();                       // ป้ายในเมนูต้องสลับข้อความตามธีมที่เพิ่งเปลี่ยน
-    toast(now === 'green' ? 'เปลี่ยนเป็นธีมเขียว–ดำแล้ว' : 'กลับมาธีมฟ้า–ขาวแล้ว', 'ok', 1800);
-  });
 
   on(document, 'click', '[data-tour-replay]', () => {
     closeMenu();

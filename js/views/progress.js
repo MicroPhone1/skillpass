@@ -51,15 +51,15 @@ export default {
           </div>
           <div class="radar-wrap">
             ${radarChart(axes, [
-              { name:'เป้าหมายสอบผ่าน', values:target,   color:'var(--blue-200)', fill:.30, dots:false },
+              { name:'เป้าหมายสอบผ่าน', values:target,   color:'var(--brand-200)', fill:.30, dots:false },
               { name:'ค่าเฉลี่ยรุ่นเดียวกัน', values:classAvg, color:'var(--warn)',     fill:.10, dots:false },
-              { name:'ระดับของคุณ',      values:mine,     color:'var(--blue-600)', fill:.26 },
+              { name:'ระดับของคุณ',      values:mine,     color:'var(--brand-600)', fill:.26 },
             ], { size: 330 })}
           </div>
           <div class="legend">
-            <span><i style="background:var(--blue-600)"></i>ระดับของคุณ</span>
+            <span><i style="background:var(--brand-600)"></i>ระดับของคุณ</span>
             <span><i style="background:var(--warn)"></i>ค่าเฉลี่ยรุ่นเดียวกัน</span>
-            <span><i style="background:var(--blue-200)"></i>เป้าหมายสอบผ่าน (80%)</span>
+            <span><i style="background:var(--brand-200)"></i>เป้าหมายสอบผ่าน (80%)</span>
           </div>
         </div>
 

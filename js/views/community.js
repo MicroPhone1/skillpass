@@ -67,7 +67,7 @@ const view = {
             </div>
           </div>
 
-          <div class="card" style="background:var(--blue-50);border-color:var(--blue-200)">
+          <div class="card" style="background:var(--brand-50);border-color:var(--brand-200)">
             <div class="card-head">
               <div class="track-ico" style="background:#fff">${icon('heart')}</div>
               <div><h2>กติกาของห้องนี้</h2></div>
@@ -194,7 +194,7 @@ function openComposer(ctx){
       placeholder="เล่าอาการ สิ่งที่ลองแล้ว และค่าที่วัดได้"></textarea>
 
     ${last ? `<label class="row" style="gap:9px;margin-top:14px;cursor:pointer">
-      <input type="checkbox" id="c-attach" style="width:17px;height:17px;accent-color:var(--blue-600)">
+      <input type="checkbox" id="c-attach" style="width:17px;height:17px;accent-color:var(--brand-600)">
       <span class="small">แนบผลฝึกล่าสุด: ${esc(drillById(last.drillId)?.name || '')} (${last.score}%)</span>
     </label>` : ''}
 

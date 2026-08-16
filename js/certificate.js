@@ -146,7 +146,7 @@ export function celebrate(cert){
       <h2>ยินดีด้วย! คุณได้รับเกียรติบัตร</h2>
       <p class="small muted" style="margin-top:6px;line-height:1.7">
         ผ่านเกณฑ์ทั้งภาคทฤษฎีและภาคปฏิบัติของหลักสูตร<br>
-        <b style="color:var(--blue-700)">${esc(track.name)}</b> · ${esc(lv.th)}
+        <b style="color:var(--brand-700)">${esc(track.name)}</b> · ${esc(lv.th)}
       </p>
     </div>
     <div class="cert-preview">${certificateSVG(cert)}</div>
@@ -198,11 +198,11 @@ const nameFont = n => (isThai(n) ? SERIF_THAI : SERIF_LATIN);
    ภาษาไทยจึงต้องเป็นศูนย์เสมอ ส่วนละตินยังจัดระยะได้ตามปกติ */
 const ls = (text, value) => (isThai(text) ? 0 : value);
 
-const INK  = '#101C33';   // หมึกเข้มแต่ไม่ดำสนิท
+const INK  = '#12200E';   // หมึกเข้มแต่ไม่ดำสนิท
 const GOLD = '#A98235';
-const BLUE = '#1E48C7';
-const SOFT = '#7A879C';
-const LINE = '#DFE5F0';
+const BRAND = '#256F19';
+const SOFT = '#7C8A78';
+const LINE = '#E2EADA';
 
 /* ------------------------------------------------------------ ข้อความสองภาษา */
 const STRINGS = {
@@ -288,9 +288,9 @@ function seal(cx, cy, r){
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="#fff" stroke="${GOLD}" stroke-width="1.2"/>
     <circle cx="${cx}" cy="${cy}" r="${r - 3.5}" fill="none" stroke="${GOLD}" stroke-width=".6" opacity=".55"/>
     ${ticks}
-    <circle cx="${cx}" cy="${cy}" r="${r - 15}" fill="none" stroke="${BLUE}" stroke-width="1.1" opacity=".28"/>
+    <circle cx="${cx}" cy="${cy}" r="${r - 15}" fill="none" stroke="${BRAND}" stroke-width="1.1" opacity=".28"/>
     <path d="M${cx - 9.5} ${cy + .5} l6.5 6.5 L${cx + 10.5} ${cy - 7.5}"
-      fill="none" stroke="${BLUE}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+      fill="none" stroke="${BRAND}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
   </g>`;
 }
 
@@ -360,7 +360,7 @@ export function certificateSVG(cert, { standalone = false, lang } = {}){
 
   <!-- หัวกระดาษ -->
   <g transform="translate(${W / 2} ${Y.brand})">
-    <rect x="-104" y="-15" width="30" height="30" rx="9" fill="${BLUE}"/>
+    <rect x="-104" y="-15" width="30" height="30" rx="9" fill="${BRAND}"/>
     <path d="M-97 -1 l5 5 L-81 -9" fill="none" stroke="#fff" stroke-width="3.6"
       stroke-linecap="round" stroke-linejoin="round"/>
     <text x="-66" y="-2" font-size="19" font-weight="700" fill="${INK}" letter-spacing="-.3">Check Chang</text>
@@ -387,7 +387,7 @@ export function certificateSVG(cert, { standalone = false, lang } = {}){
   <!-- หลักสูตร -->
   <text x="${W / 2}" y="${Y.completed}" text-anchor="middle" font-size="13" fill="${SOFT}">${esc(L.hasCompleted)}</text>
   <text x="${W / 2}" y="${Y.track}" text-anchor="middle" font-family="${nameFont(trackName)}"
-    font-size="${trackSize.toFixed(1)}" fill="${BLUE}">${esc(trackName)}</text>
+    font-size="${trackSize.toFixed(1)}" fill="${BRAND}">${esc(trackName)}</text>
   <text x="${W / 2}" y="${Y.benchmark}" text-anchor="middle" font-size="11.5" fill="${SOFT}">
     ${esc(L.benchmark)} ${esc(L.cert(track))}</text>
 

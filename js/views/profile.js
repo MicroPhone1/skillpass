@@ -145,7 +145,7 @@ export default {
       <!-- ===== บัญชีและความปลอดภัย ===== -->
       <section class="card pad-lg">
         <div class="card-head">
-          <div class="track-ico" style="background:var(--blue-50)">${icon('lock')}</div>
+          <div class="track-ico" style="background:var(--brand-50)">${icon('lock')}</div>
           <div><h2>บัญชีและความปลอดภัย</h2><p>จัดการการเข้าถึงและข้อมูลของคุณ</p></div>
         </div>
         <div class="stack" style="gap:0">

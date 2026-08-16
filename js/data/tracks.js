@@ -5,7 +5,7 @@
    ============================================================ */
 
 export const CATEGORIES = [
-  { id:'trade',   name:'ช่างฝีมือ & อาชีวศึกษา', icon:'wrench',    color:'var(--blue-600)' },
+  { id:'trade',   name:'ช่างฝีมือ & อาชีวศึกษา', icon:'wrench',    color:'var(--brand-600)' },
   { id:'digital', name:'ไอที & ดิจิทัล',          icon:'cloud',     color:'var(--cyan)'     },
   { id:'lang',    name:'ภาษา',                    icon:'globe',     color:'var(--violet)'   },
   { id:'health',  name:'สุขภาพ & ความปลอดภัย',    icon:'heartbeat', color:'var(--bad)'      },

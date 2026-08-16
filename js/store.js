@@ -53,7 +53,6 @@ const DEFAULT = {
   posts: [],                       // user-created community posts
   liked: [],                       // liked post ids
   seenTour: false,
-  skin: 'blue',                    // 'blue' | 'green' — ธีมสีของทั้งแอป
   demoSeeded: false,               // ปลูกข้อมูลตัวอย่างของโหมดผู้เยี่ยมชมไปแล้วหรือยัง
 };
 
@@ -278,17 +277,6 @@ export function setActiveTrack(id){
 }
 export function setRole(r){ state.role = r; touch(); }
 
-/* ธีมสีต้องทาลง <html> ไม่ใช่ <body> เพราะพื้นหลังของหน้าถูกกำหนดที่ระดับ root
-   ถ้าทาที่ body จะเห็นขอบสีเดิมโผล่ตอนเลื่อนเลยขอบเนื้อหา */
-export function applySkin(skin = state.skin){
-  document.documentElement.dataset.skin = skin === 'green' ? 'green' : 'blue';
-}
-export function setSkin(skin){
-  state.skin = skin === 'green' ? 'green' : 'blue';
-  applySkin(state.skin);
-  touch();
-  return state.skin;
-}
 export function toggleLike(postId){
   const i = state.liked.indexOf(postId);
   if (i < 0) state.liked.push(postId); else state.liked.splice(i, 1);

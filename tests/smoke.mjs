@@ -1039,49 +1039,106 @@ await check('สลับกล้องหน้า/หลังได้ แ�
     throw new Error('CSS ไม่ได้ปิดมิเรอร์ตอนใช้กล้องหลัง');
 });
 
-await check('ธีมเขียว–ขาว สลับได้และคอนทราสต์ผ่านเกณฑ์', () => {
+await check('ทั้งระบบเป็นเขียว–ขาวชุดเดียว และคอนทราสต์ผ่านเกณฑ์', async () => {
   const css = fs.readFileSync(path.join(ROOT, 'css/theme.css'), 'utf8');
-  const skin = css.slice(css.indexOf('[data-skin="green"]{'));
-  if (!skin) throw new Error('ไม่มีสกินเขียวใน theme.css');
 
   const val = name => {
-    // ใช้ [^#]* แทน \s* เพราะระยะเว้นวรรคจัดคอลัมน์ในไฟล์ไม่คงที่
-    const m = skin.match(new RegExp('--' + name + ':[^#]*#([0-9A-Fa-f]{6})'));
-    if (!m) throw new Error('หา token --' + name + ' ในสกินไม่เจอ');
+    const m = css.match(new RegExp('--' + name + ':[^#]*#([0-9A-Fa-f]{6})'));
+    if (!m) throw new Error('หา token --' + name + ' ไม่เจอ');
     return m[1];
   };
   const lin = hex => [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
       .map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4));
   const lum = hex => { const [r, g, b] = lin(hex); return .2126 * r + .7152 * g + .0722 * b; };
-  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
-                            return (x + .05) / (y + .05); };
+  const ratio = (x, y) => { const [hi, lo] = [lum(x), lum(y)].sort((m, n) => n - m);
+                            return (hi + .05) / (lo + .05); };
 
-  /* สเกล 50–300 ต้องยังสว่างกว่า 700–950 เสมอ
+  /* ต้องเหลือชุดสีเดียว ไม่มีธีมฟ้าและไม่มีตัวสลับสกินหลงเหลือ */
+  if (/--blue-/.test(css)) throw new Error('ยังมี token --blue- หลงเหลือใน theme.css');
+  if (/\[data-skin/.test(css)) throw new Error('ยังมีบล็อกสลับสกินหลงเหลือ');
+  for (const f of ['js/app.js', 'js/store.js']){
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    if (/data-skin|setSkin|applySkin/.test(src)) throw new Error(`ยังมีโค้ดสลับธีมใน ${f}`);
+  }
+
+  /* ทุกไฟล์ต้องอ้าง token ใหม่หมด ไม่มีตัวไหนอ้างของเก่าที่ถูกลบไปแล้ว */
+  for (const f of ['css/components.css', 'js/views/home.js', 'js/views/simulator.js']){
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    if (/var\(--blue-/.test(src)) throw new Error(`${f} ยังอ้าง token สีเก่าที่ไม่มีแล้ว`);
+  }
+
+  /* ลำดับอ่อน→เข้มของสเกลต้องคงไว้
      เพราะโค้ดใช้ช่วงอ่อนเป็นตัวหนังสือบนพื้นเข้มของ hero กับแถบข้าง
-     ถ้าใครกลับด้าน ตัวหนังสือจะจมหายไปทั้งแถบ (เคยพลาดมาแล้วตอนทำธีมมืด) */
-  const light = ['blue-50', 'blue-100', 'blue-200', 'blue-300'].map(n => lum(val(n)));
-  const dark  = ['blue-700', 'blue-800', 'blue-900', 'blue-950'].map(n => lum(val(n)));
+     ถ้าใครกลับด้าน ตัวหนังสือจะจมหายทั้งแถบ (เคยพลาดมาแล้ว) */
+  const light = ['brand-50', 'brand-100', 'brand-200', 'brand-300'].map(n => lum(val(n)));
+  const dark  = ['brand-700', 'brand-800', 'brand-900', 'brand-950'].map(n => lum(val(n)));
   if (Math.min(...light) <= Math.max(...dark))
     throw new Error('สเกลสีกลับด้าน: โทน 50–300 ต้องสว่างกว่า 700–950 เสมอ');
 
-  /* ธีมนี้พื้นสว่าง ตัวหนังสือหลักจึงต้องเข้ม */
-  if (lum(val('ink')) > 0.2)  throw new Error('สีตัวหนังสือหลักต้องเข้มบนพื้นสว่าง');
-  if (lum(val('bg')) < 0.7)   throw new Error('พื้นหลังต้องสว่าง');
+  if (lum(val('ink')) > 0.2) throw new Error('สีตัวหนังสือหลักต้องเข้มบนพื้นสว่าง');
+  if (lum(val('bg')) < 0.7)  throw new Error('พื้นหลังต้องสว่าง');
 
-  /* ปุ่มหลักเป็นพื้นเขียวตัวหนังสือขาว เขียวกลาง ๆ มักตกเกณฑ์ตรงนี้ */
-  const onBrand = ratio('FFFFFF', val('blue-600'));
+  /* ปุ่มหลักพื้นเขียวตัวหนังสือขาว — เขียวกลาง ๆ มักตกเกณฑ์ตรงนี้ */
+  const onBrand = ratio('FFFFFF', val('brand-600'));
   if (onBrand < 4.5)
     throw new Error(`ตัวหนังสือขาวบนปุ่มเขียวคอนทราสต์แค่ ${onBrand.toFixed(2)} ต้องได้ 4.5 ขึ้นไป`);
 
-  /* ตัวหนังสือเนื้อหาบนพื้นหลักต้องอ่านง่าย */
   const body = ratio(val('ink'), val('surface'));
   if (body < 7) throw new Error(`ตัวหนังสือบนพื้นการ์ดคอนทราสต์แค่ ${body.toFixed(2)}`);
 
-  const app = fs.readFileSync(path.join(ROOT, 'js/app.js'), 'utf8');
-  if (!app.includes('applySkin()')) throw new Error('ไม่ได้ทาธีมตอนบูต');
-  if (!app.includes('data-skin')) throw new Error('ไม่มีปุ่มสลับธีมในเมนูผู้ใช้');
-});
-await check('ชั้นเรียนตัวอย่างอ้างทักษะที่มีจริง และมีเนื้อหารองรับครบ', async () => {
+  /* ตัวหนังสือรองก็ต้องอ่านออก ไม่ใช่จางจนหาย */
+  const muted = ratio(val('ink-3'), val('surface'));
+  if (muted < 4.5) throw new Error(`ตัวหนังสือรองคอนทราสต์แค่ ${muted.toFixed(2)}`);
+
+  /* สีที่เขียนเป็นค่าตรง ๆ ไม่ผ่าน token คือจุดที่ธีมเปลี่ยนไม่ถึง
+     ตอนเปลี่ยนเป็นเขียว–ขาว แถบข้างกับใบประกาศยังค้างสีฟ้าเพราะเรื่องนี้
+     จึงกวาดทั้งซอร์สแล้วห้ามมีเฉดที่น้ำเงินเด่นกว่าเขียวและแดง */
+  const bluish = h => {
+    const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+    return b > r + 18 && b > g + 18 && b > 70;
+  };
+  const files = [
+    ...fs.readdirSync(path.join(ROOT, 'css')).filter(f => f.endsWith('.css')).map(f => 'css/' + f),
+    ...fs.readdirSync(path.join(ROOT, 'js')).filter(f => f.endsWith('.js')).map(f => 'js/' + f),
+    ...fs.readdirSync(path.join(ROOT, 'js/views')).map(f => 'js/views/' + f),
+    'index.html',
+  ];
+  const stray = [];
+  for (const f of files){
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    for (const m of src.matchAll(/#([0-9A-Fa-f]{6})\b/g))
+      if (bluish(m[1])) stray.push(`${f} #${m[1]}`);
+    for (const m of src.matchAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)/g)){
+      const [r, g, b] = [m[1], m[2], m[3]].map(Number);
+      if (b > r + 18 && b > g + 18 && b > 70) stray.push(`${f} rgb(${r},${g},${b})`);
+    }
+  }
+  if (stray.length)
+    throw new Error(`ยังมีสีน้ำเงินเขียนตรง ๆ ${stray.length} จุด: ${[...new Set(stray)].slice(0, 4).join(', ')}`);
+
+  /* ป้ายตัวเลขบนแถบข้างเป็นพื้นเข้มตัวหนังสือขาว ต้องอ่านออกเหมือนปุ่มหลัก */
+  const onCyan = ratio('FFFFFF', val('cyan'));
+  if (onCyan < 4.5) throw new Error(`ตัวหนังสือขาวบนป้ายคอนทราสต์แค่ ${onCyan.toFixed(2)}`);
+
+  /* อวาตาร์สร้างสีเองจากชื่อ ไม่ได้อ่านจาก token จึงต้องตรวจแยก
+     เขียวสว่างกว่าน้ำเงินที่เคยใช้ ถ้าตั้งความสว่างเท่าเดิมตัวย่อสีขาวจะจาง */
+  const { avatarColor } = await import(url('js/ui.js'));
+  const hsl2hex = s => {
+    const [h, sat, li] = s.match(/[\d.]+/g).map(Number);
+    const S = sat / 100, L = li / 100;
+    const C = (1 - Math.abs(2 * L - 1)) * S, X = C * (1 - Math.abs((h / 60) % 2 - 1)), m = L - C / 2;
+    const seg = [[C,X,0],[X,C,0],[0,C,X],[0,X,C],[X,0,C],[C,0,X]][Math.floor(h / 60) % 6];
+    return seg.map(v => Math.round((v + m) * 255).toString(16).padStart(2, '0')).join('');
+  };
+  for (const nm of ['สมชาย ใจดี', 'Nok', 'ก', 'Wichuda P.', 'zzz', 'ธนกฤต', 'AB', 'ปิยะ']){
+    const hex = hsl2hex(avatarColor(nm));
+    const [r, g, b] = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16));
+    if (b > r + 18 && b > g + 18 && b > 70)
+      throw new Error(`อวาตาร์ของ "${nm}" ออกเป็นสีน้ำเงิน rgb(${r},${g},${b})`);
+    const c = ratio('FFFFFF', hex);
+    if (c < 4.5) throw new Error(`ตัวย่อสีขาวบนอวาตาร์ของ "${nm}" คอนทราสต์แค่ ${c.toFixed(2)}`);
+  }
+});await check('ชั้นเรียนตัวอย่างอ้างทักษะที่มีจริง และมีเนื้อหารองรับครบ', async () => {
   const CM = await import(url('js/data/community.js'));
   const S2 = await import(url('js/data/standards.js'));
   const c = CM.COHORT;

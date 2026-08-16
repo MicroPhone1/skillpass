@@ -110,7 +110,7 @@ function listView(){
   <div class="stack" style="gap:20px">
 
     ${ready.length ? `
-    <section class="hero" style="background:linear-gradient(128deg,#1A3CA0,#0B1F52)">
+    <section class="hero" style="background:linear-gradient(128deg,#1A5312,#0A2408)">
       <div class="row" style="justify-content:space-between;gap:20px">
         <div style="flex:1;min-width:min(100%,280px)">
           <span class="pill" style="background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.28);color:#fff">
@@ -181,7 +181,7 @@ function listView(){
       </div>
     </section>` : ''}
 
-    <div class="card" style="background:var(--blue-50);border-color:var(--blue-200)">
+    <div class="card" style="background:var(--brand-50);border-color:var(--brand-200)">
       <div class="card-head">
         <div class="track-ico" style="background:#fff">${icon('shield')}</div>
         <div>
@@ -288,7 +288,7 @@ function detailView(id){
           <div class="rubric-row">
             <span class="r-name">เลขที่</span>
             <span class="r-score num" data-copy="${esc(c.code)}" role="button" tabindex="0"
-              style="cursor:pointer;color:var(--blue-600)" title="คลิกเพื่อคัดลอก">${esc(c.code)}</span>
+              style="cursor:pointer;color:var(--brand-600)" title="คลิกเพื่อคัดลอก">${esc(c.code)}</span>
           </div>
         </div>
       </div>

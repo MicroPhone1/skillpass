@@ -124,7 +124,7 @@ function listView(){
       </div>
     </section>` : ''}
 
-    <div class="card" style="border-color:var(--blue-200);background:var(--blue-50)">
+    <div class="card" style="border-color:var(--brand-200);background:var(--brand-50)">
       <div class="card-head">
         <div class="track-ico" style="background:#fff">${icon('shield')}</div>
         <div>
@@ -188,7 +188,7 @@ function briefView(d){
           <div class="stack" style="gap:0">
             ${d.rubric.map(r => `<div class="rubric-row">
               <span class="r-name">${esc(r.name)}</span>
-              <span class="r-score" style="color:var(--blue-600)">${r.weight}%</span>
+              <span class="r-score" style="color:var(--brand-600)">${r.weight}%</span>
             </div>`).join('')}
           </div>
         </div>
@@ -515,12 +515,12 @@ function resultView(d){
 
     <section class="card">
       <div class="card-head">
-        <div class="track-ico" style="background:var(--blue-50)">${icon('brain')}</div>
+        <div class="track-ico" style="background:var(--brand-50)">${icon('brain')}</div>
         <div><h2>ผลวิเคราะห์และคำแนะนำ</h2><p>อ้างอิงจากสัญญาณที่วัดได้จริงในรอบนี้</p></div>
       </div>
       <ul class="stack" style="gap:11px">
         ${result.feedback.map(f => `<li class="row" style="gap:10px;align-items:flex-start">
-          <span style="color:var(--blue-500);flex:none;margin-top:3px">${icon('arrowR')}</span>
+          <span style="color:var(--brand-500);flex:none;margin-top:3px">${icon('arrowR')}</span>
           <span class="small" style="line-height:1.75">${esc(f)}</span>
         </li>`).join('')}
       </ul>

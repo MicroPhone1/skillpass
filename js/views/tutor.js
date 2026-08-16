@@ -56,7 +56,7 @@ export default {
         </form>
       </div>
 
-      <div class="card" style="background:var(--blue-50);border-color:var(--blue-200)">
+      <div class="card" style="background:var(--brand-50);border-color:var(--brand-200)">
         <div class="card-head">
           <div class="track-ico" style="background:#fff">${icon('shield')}</div>
           <div>

@@ -50,7 +50,7 @@ function briefView(c){
   <div class="stack" style="gap:18px;max-width:900px;margin:0 auto">
     <section class="card pad-lg">
       <div class="card-head">
-        <div class="track-ico" style="background:var(--blue-100);color:var(--blue-700);width:54px;height:54px">
+        <div class="track-ico" style="background:var(--brand-100);color:var(--brand-700);width:54px;height:54px">
           ${icon('zone')}</div>
         <div style="flex:1;min-width:0">
           <h2 style="font-size:20px">${esc(c.name)}</h2>
@@ -295,7 +295,7 @@ function resultView(c){
       <h2 style="margin-top:14px;font-size:20px">
         ${r.correct ? 'หาจุดเสียเจอ' : 'ยังไม่ใช่จุดที่เสีย'}</h2>
       <p class="small muted" style="margin-top:6px;line-height:1.75">
-        อาการจริงคือ <b style="color:var(--blue-700)">${esc(r.actual.name)}</b><br>
+        อาการจริงคือ <b style="color:var(--brand-700)">${esc(r.actual.name)}</b><br>
         ${r.correct ? '' : `คุณตอบว่า “${esc(r.answered)}”<br>`}
         ใช้เวลา ${r.seconds} วินาที · วัดไป ${r.measures} จุด
       </p>
