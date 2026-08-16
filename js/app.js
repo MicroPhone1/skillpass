@@ -21,12 +21,13 @@ import certs     from './views/certs.js';
 import profile   from './views/profile.js';
 import teacher   from './views/teacher.js';
 import classes   from './views/classes.js';
+import simulator from './views/simulator.js';
 import { status as getAIStatus, lastStatus as lastAIStatus, onStatusChange } from './ai/client.js';
 import { startTour } from './tour.js';
 
 /* ------------------------------------------------------------ routes */
 const ROUTES = { home, tracks, exam, lab, tutor, progress, assessment, community,
-                 passport, certs, profile, teacher, classes };
+                 passport, certs, profile, teacher, classes, simulator };
 
 const NAV_STUDENT = [
   { group:'เรียนรู้' },
@@ -34,7 +35,8 @@ const NAV_STUDENT = [
   { id:'tracks',    label:'เส้นทางทักษะ',   icon:'compass' },
   { group:'ฝึกฝน' },
   { id:'exam',      label:'ทดสอบปรับระดับ', icon:'exam' },
-  { id:'lab',       label:'ห้องฝึกกล้อง',   icon:'camera', badge:'ใหม่' },
+  { id:'lab',       label:'ห้องฝึกกล้อง',   icon:'camera' },
+  { id:'simulator', label:'ไล่หาจุดเสีย',   icon:'zone', badge:'ใหม่' },
   { id:'tutor',     label:'ติวเตอร์ AI',    icon:'brain' },
   { group:'ความก้าวหน้า' },
   { id:'progress',  label:'จุดอ่อน & แผนติว', icon:'radar' },
@@ -53,6 +55,7 @@ const NAV_TEACHER = [
   { group:'เนื้อหา' },
   { id:'tracks',    label:'เส้นทางทักษะ',   icon:'compass' },
   { id:'lab',       label:'ห้องฝึกกล้อง',   icon:'camera' },
+  { id:'simulator', label:'ไล่หาจุดเสีย',   icon:'zone' },
   { id:'certs',     label:'เกียรติบัตร',    icon:'trophy' },
   { id:'community', label:'คอมมูนิตี้',     icon:'people' },
 ];

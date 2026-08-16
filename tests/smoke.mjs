@@ -69,7 +69,7 @@ console.log('\n== import ==');
 let mods = {};
 await check('app.js (boots shell)', async () => { mods.app = await import(url('js/app.js')); });
 
-const viewNames = ['home','tracks','exam','lab','tutor','progress','assessment','community','passport','certs','profile','teacher','classes'];
+const viewNames = ['home','tracks','exam','lab','tutor','progress','assessment','community','passport','certs','profile','teacher','classes','simulator'];
 for (const v of viewNames) {
   await check(`views/${v}.js`, async () => { mods[v] = (await import(url(`js/views/${v}.js`))).default; });
 }
@@ -1039,38 +1039,48 @@ await check('สลับกล้องหน้า/หลังได้ แ�
     throw new Error('CSS ไม่ได้ปิดมิเรอร์ตอนใช้กล้องหลัง');
 });
 
-await check('ธีมเขียว–ดำ สลับได้และไม่ทำให้ตัวหนังสือจมหาย', () => {
+await check('ธีมเขียว–ขาว สลับได้และคอนทราสต์ผ่านเกณฑ์', () => {
   const css = fs.readFileSync(path.join(ROOT, 'css/theme.css'), 'utf8');
   const skin = css.slice(css.indexOf('[data-skin="green"]{'));
   if (!skin) throw new Error('ไม่มีสกินเขียวใน theme.css');
 
-  /* สเกล 50–300 ต้องยังเป็นสีอ่อน เพราะโค้ดใช้เขียนบนพื้นเข้ม
-     ถ้าใครกลับด้าน ตัวหนังสือบน hero กับแถบข้างจะหายไปทั้งแถบ */
-  const val = name => (skin.match(new RegExp(`--${name}:\\s*#([0-9A-Fa-f]{6})`)) || [])[1];
-  const lum = hex => {
-    const [r, g, b] = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
-      .map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4));
-    return .2126 * r + .7152 * g + .0722 * b;
+  const val = name => {
+    // ใช้ [^#]* แทน \s* เพราะระยะเว้นวรรคจัดคอลัมน์ในไฟล์ไม่คงที่
+    const m = skin.match(new RegExp('--' + name + ':[^#]*#([0-9A-Fa-f]{6})'));
+    if (!m) throw new Error('หา token --' + name + ' ในสกินไม่เจอ');
+    return m[1];
   };
+  const lin = hex => [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+      .map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4));
+  const lum = hex => { const [r, g, b] = lin(hex); return .2126 * r + .7152 * g + .0722 * b; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+                            return (x + .05) / (y + .05); };
+
+  /* สเกล 50–300 ต้องยังสว่างกว่า 700–950 เสมอ
+     เพราะโค้ดใช้ช่วงอ่อนเป็นตัวหนังสือบนพื้นเข้มของ hero กับแถบข้าง
+     ถ้าใครกลับด้าน ตัวหนังสือจะจมหายไปทั้งแถบ (เคยพลาดมาแล้วตอนทำธีมมืด) */
   const light = ['blue-50', 'blue-100', 'blue-200', 'blue-300'].map(n => lum(val(n)));
   const dark  = ['blue-700', 'blue-800', 'blue-900', 'blue-950'].map(n => lum(val(n)));
   if (Math.min(...light) <= Math.max(...dark))
     throw new Error('สเกลสีกลับด้าน: โทน 50–300 ต้องสว่างกว่า 700–950 เสมอ');
-  if (lum(val('ink')) < 0.5) throw new Error('สีตัวหนังสือหลักต้องสว่างบนพื้นดำ');
-  if (lum(val('bg')) > 0.1)  throw new Error('พื้นหลังต้องเข้ม');
 
-  /* แถบบนเดิมเป็นกระจกขาว ถ้าไม่ทับจะกลายเป็นฝ้าขาวกลบหัวเรื่อง */
-  if (!/\[data-skin="green"\] #topbar/.test(css))
-    throw new Error('ไม่ได้ทับพื้นแถบบนของธีมมืด');
-  /* เกียรติบัตรต้องขาวเสมอ เพราะต้องพิมพ์ลงกระดาษ */
-  if (!/\[data-skin="green"\] .cert-paper[^{]*\{background:#fff\}/.test(css.replace(/\s+/g, ' ')))
-    throw new Error('เกียรติบัตรต้องเป็นพื้นขาวแม้อยู่ในธีมมืด');
+  /* ธีมนี้พื้นสว่าง ตัวหนังสือหลักจึงต้องเข้ม */
+  if (lum(val('ink')) > 0.2)  throw new Error('สีตัวหนังสือหลักต้องเข้มบนพื้นสว่าง');
+  if (lum(val('bg')) < 0.7)   throw new Error('พื้นหลังต้องสว่าง');
+
+  /* ปุ่มหลักเป็นพื้นเขียวตัวหนังสือขาว เขียวกลาง ๆ มักตกเกณฑ์ตรงนี้ */
+  const onBrand = ratio('FFFFFF', val('blue-600'));
+  if (onBrand < 4.5)
+    throw new Error(`ตัวหนังสือขาวบนปุ่มเขียวคอนทราสต์แค่ ${onBrand.toFixed(2)} ต้องได้ 4.5 ขึ้นไป`);
+
+  /* ตัวหนังสือเนื้อหาบนพื้นหลักต้องอ่านง่าย */
+  const body = ratio(val('ink'), val('surface'));
+  if (body < 7) throw new Error(`ตัวหนังสือบนพื้นการ์ดคอนทราสต์แค่ ${body.toFixed(2)}`);
 
   const app = fs.readFileSync(path.join(ROOT, 'js/app.js'), 'utf8');
   if (!app.includes('applySkin()')) throw new Error('ไม่ได้ทาธีมตอนบูต');
   if (!app.includes('data-skin')) throw new Error('ไม่มีปุ่มสลับธีมในเมนูผู้ใช้');
 });
-
 await check('ชั้นเรียนตัวอย่างอ้างทักษะที่มีจริง และมีเนื้อหารองรับครบ', async () => {
   const CM = await import(url('js/data/community.js'));
   const S2 = await import(url('js/data/standards.js'));
@@ -1104,6 +1114,61 @@ await check('ชั้นเรียนตัวอย่างอ้างท�
   if (!S2.standardForTrack(c.track))
     throw new Error('track ของห้องตัวอย่างยังไม่ผูกกับเกณฑ์มาตรฐานใด');
 });
+
+await check('เครื่องจำลองอาการเสีย: ผลวงจรถูกต้องและให้คะแนนวิธีไล่ ไม่ใช่แค่คำตอบ', async () => {
+  const FS = await import(url('js/engine/faultsim.js'));
+  const CIR = await import(url('js/data/circuits.js'));
+  const circuit = CIR.CIRCUITS[0];
+  const mk = id => { const s = new FS.FaultSession({}); s.fault = circuit.faults.find(f => f.id === id); return s; };
+
+  /* ไฟต้องหายหลังจุดที่เสีย ไม่ใช่ก่อนหน้า — เป็นหัวใจของการไล่ */
+  const f = mk('fuse_blown');
+  f.pressStart();
+  if (f.voltageAt('TP1') !== circuit.supply) throw new Error('ก่อนจุดเสียต้องยังมีไฟ');
+  if (f.voltageAt('TP2') !== 0) throw new Error('หลังจุดเสียต้องไม่มีไฟ');
+
+  /* อาการที่แยกจากกันด้วยพฤติกรรม ไม่ใช่แค่แรงดัน */
+  const aux = mk('aux_open'); aux.pressStart(true);
+  if (!aux.motorRunning) throw new Error('หน้าสัมผัสช่วยเสีย ตอนกดค้างมอเตอร์ต้องหมุน');
+  aux.releaseStart();
+  if (aux.motorRunning) throw new Error('ปล่อยปุ่มแล้วต้องหยุด เพราะไม่มีวงจรค้าง');
+
+  const weld = mk('weld_contact'); weld.pressStop();
+  if (!weld.motorRunning) throw new Error('หน้าสัมผัสละลายติด กดสตอปแล้วต้องยังหมุน');
+
+  const mo = mk('motor_open'); mo.pressStart();
+  if (!mo.contactorOn) throw new Error('ขดลวดมอเตอร์ขาด คอนแทคเตอร์ต้องยังดูด');
+  if (mo.motorRunning) throw new Error('ขดลวดขาด มอเตอร์ต้องไม่หมุน');
+
+  /* ความปลอดภัยต้องมีน้ำหนักจริง ไม่ใช่หักแค่นิดเดียว */
+  const safe = mk('fuse_blown');
+  ['TP3','TP1','TP2'].forEach(t => safe.measure(t));
+  safe.isolate(); safe.contactWork('check_wire'); safe.submit('fuse_blown');
+
+  const unsafe = mk('fuse_blown');
+  ['TP3','TP1','TP2'].forEach(t => unsafe.measure(t));
+  unsafe.contactWork('check_wire'); unsafe.submit('fuse_blown');
+
+  if (unsafe.finished.safetyViolations !== 1) throw new Error('ไม่ได้จับว่าแตะวงจรก่อนตัดไฟ');
+  if (unsafe.score() > FS.FaultSession.UNSAFE_CAP)
+    throw new Error(`แตะวงจรก่อนตัดไฟแล้วยังได้ ${unsafe.score()} เกินเพดาน`);
+  if (safe.score() <= unsafe.score()) throw new Error('ทำถูกขั้นตอนต้องได้คะแนนสูงกว่า');
+
+  /* ตอบผิดแต่ไล่เป็นระบบ ต้องยังได้แต้มบ้าง เพื่อไม่ให้ท้อ */
+  const wrong = mk('aux_open'); wrong.measure('TP2'); wrong.submit('coil_open');
+  if (wrong.score() <= 0) throw new Error('ตอบผิดแต่ไล่ถูกทางควรได้แต้มบ้าง');
+  if (wrong.score() >= safe.score()) throw new Error('ตอบผิดต้องได้น้อยกว่าตอบถูก');
+
+  /* ความยากต้องกระจาย ไม่งั้นเลือกให้เหมาะกับระดับผู้เรียนไม่ได้ */
+  const bs = circuit.faults.map(x => x.b);
+  if (Math.max(...bs) - Math.min(...bs) < 2)
+    throw new Error('ช่วงความยากของอาการเสียแคบเกินกว่าจะปรับตามระดับผู้เรียน');
+  for (const fl of circuit.faults){
+    if (!fl.fix) throw new Error(`อาการ ${fl.id} ไม่มีวิธีแก้บอกผู้เรียน`);
+    if (!circuit.symptomsByFault[fl.id]) throw new Error(`อาการ ${fl.id} ไม่มีคำบรรยายอาการ`);
+  }
+});
+
 
 console.log(fails ? `\n${fails} FAILURE(S)\n` : '\nall green\n');
 process.exit(fails ? 1 : 0);
