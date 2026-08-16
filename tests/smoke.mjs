@@ -380,7 +380,7 @@ await check('ผ่านทฤษฎีแต่ยังไม่ผ่าน�
     store_.pushExam({ trackId:'electrician', mode:'adaptive', items:9, percent:92,
                       theta:1.7, readiness:89, seconds:280 });
 
-  const e = CERT.eligibility('electrician');
+  const e = CERT.eligibility('automation');
   const practical = e.checks.find(c => c.id === 'practical');
   if (!practical) throw new Error('เส้นทางที่มีบทฝึกต้องมีเกณฑ์ภาคปฏิบัติ');
   if (practical.ok) throw new Error('ผ่านภาคปฏิบัติทั้งที่ยังไม่เคยฝึก');
@@ -865,7 +865,9 @@ await check('บัญชีผู้เยี่ยมชม: โปรไฟ�
   if (certs.length !== 1) throw new Error('ควรมีเกียรติบัตรสาธิต 1 ใบ ได้ ' + certs.length);
   if (certs[0].code === otherCode) throw new Error('เห็นเกียรติบัตรของบัญชีอื่น');
   if (certs[0].name !== 'Kittiphit Boonying') throw new Error('ชื่อบนใบไม่ตรงกับโปรไฟล์');
-  if (certs[0].trackId !== 'electrician') throw new Error('เส้นทางของใบสาธิตผิด');
+  if (certs[0].trackId !== 'automation') throw new Error('เส้นทางของใบสาธิตผิด: ' + certs[0].trackId);
+  if (store_.state.activeTrack !== 'automation')
+    throw new Error('เส้นทางที่เปิดอยู่ไม่ตรงกับใบที่ออกให้: ' + store_.state.activeTrack);
   console.log(`       ${certs[0].code} · ${certs[0].score}% · Lv.${store_.levelInfo().level} · ${store_.state.xp} XP`);
 
   const out = mods.profile.render({ route:{ name:'profile', sub:null, params:{} }, go(){} });
@@ -882,7 +884,7 @@ await check('ข้อมูลสาธิตปลูกครั้งเด�
 });
 
 await check('ข้อมูลสาธิตพาไปถึงเกณฑ์เกียรติบัตรได้จริง (ไม่ใช่ยัดใบให้เฉย ๆ)', () => {
-  const e = CERT.eligibility('electrician');
+  const e = CERT.eligibility('automation');
   if (!e.ok) throw new Error('ใบสาธิตออกทั้งที่ไม่ผ่านเกณฑ์: ' + e.checks.filter(c => !c.ok).map(c => c.id));
   // อีกสองเส้นทางต้องยังไม่ผ่าน เพื่อให้หน้า "ความคืบหน้าสู่ใบถัดไป" มีอะไรให้ดู
   for (const t of ['firstaid', 'cloud'])
@@ -890,7 +892,7 @@ await check('ข้อมูลสาธิตพาไปถึงเกณฑ�
 
   // ตัวเลขบนใบต้องตรงกับประวัติที่แสดงในสมุดทักษะ ไม่ใช่คนละชุด
   const items = store_.state.examHistory
-    .filter(x => x.trackId === 'electrician').reduce((s, x) => s + x.items, 0);
+    .filter(x => x.trackId === 'automation').reduce((s, x) => s + x.items, 0);
   if (e.evidence.questions !== items)
     throw new Error(`ข้อสอบบนใบ (${e.evidence.questions}) ไม่ตรงกับประวัติ (${items})`);
   console.log('       เกณฑ์: ' + e.checks.map(c => `${c.id}=${c.now}`).join('  '));
@@ -1170,6 +1172,54 @@ await check('ทั้งระบบเป็นเขียว–ขาวช�
   /* ห้องตัวอย่างควรผูกกับเกณฑ์มาตรฐานจริง เพื่อให้หน้าเส้นทางมีที่มาอ้างอิง */
   if (!S2.standardForTrack(c.track))
     throw new Error('track ของห้องตัวอย่างยังไม่ผูกกับเกณฑ์มาตรฐานใด');
+});
+
+await check('เส้นทางเริ่มต้นของนักเรียนมีเนื้อหารองรับครบทุกฟีเจอร์', async () => {
+  /* ตอนย้ายเส้นทางเริ่มต้นจากช่างไฟอาคารมาเป็น PLC พบว่า track ใหม่
+     ไม่มีคลังความรู้เลยสักชิ้น ติวเตอร์จึงตอบว่า "ไม่มีข้อมูล" ทุกคำถาม
+     ทั้งที่หน้าจอยังดูปกติดี เทสต์นี้กันไม่ให้ย้ายเส้นทางแล้วลืมย้ายเนื้อหาตาม */
+  const KBm  = await import(url('js/data/kb.js'));
+  const S2   = await import(url('js/data/standards.js'));
+  const CIR  = await import(url('js/data/circuits.js'));
+  const tut  = await import(url('js/engine/tutor.js'));
+  const st   = await import(url('js/store.js'));
+
+  const track = st.state.activeTrack;
+  if (!T.hasTrack(track)) throw new Error(`เส้นทางเริ่มต้น "${track}" ไม่มีอยู่จริง`);
+  if (!st.state.enrolled.includes(track))
+    throw new Error('เส้นทางที่เปิดอยู่ไม่ได้อยู่ในรายการที่ลงเรียน');
+
+  const ids = T.skillsOf(track).map(s => s.id);
+
+  /* ข้อสอบ: ทุกทักษะต้องมี ไม่งั้นเอนจินปรับระดับจะประเมินทักษะนั้นไม่ได้เลย */
+  const qSkills = new Set(Q.byTrack(track).map(q => q.skill));
+  const noQ = ids.filter(id => !qSkills.has(id));
+  if (noQ.length) throw new Error('ทักษะที่ยังไม่มีข้อสอบ: ' + noQ.join(', '));
+
+  /* คลังความรู้: ต้องมีทุกทักษะ เพราะติวเตอร์ตอบเฉพาะจากคลัง ไม่เดา */
+  const kb = KBm.KB.filter(k => k.track === track);
+  if (!kb.length) throw new Error(`เส้นทาง "${track}" ไม่มีคลังความรู้เลย ติวเตอร์จะตอบไม่ได้สักคำถาม`);
+  const noKB = ids.filter(id => !kb.some(k => k.skill === id));
+  if (noKB.length) throw new Error('ทักษะที่ยังไม่มีคลังความรู้: ' + noKB.join(', '));
+  for (const k of kb){
+    if (!ids.includes(k.skill)) throw new Error(`คลังความรู้ ${k.id} ผูกกับทักษะ ${k.skill} ที่ไม่ใช่ของ track นี้`);
+    if (!k.source?.ref) throw new Error(`คลังความรู้ ${k.id} ไม่มีแหล่งอ้างอิง`);
+  }
+
+  /* ถามจริงแล้วต้องได้คำตอบที่อ้างอิงได้ ไม่ใช่แค่มีข้อมูลกองอยู่เฉย ๆ */
+  for (const q of ['วงจรค้างสถานะคืออะไร', 'โอเวอร์โหลดรีเลย์ป้องกันอะไร',
+                   'ไล่หาจุดเสียแบบแบ่งครึ่งทำยังไง']){
+    const r = tut.ask(q, { trackId: track });
+    if (r.kind !== 'answer') throw new Error(`ติวเตอร์ตอบ "${q}" ไม่ได้ ทั้งที่เป็นเรื่องในเส้นทางนี้`);
+  }
+  /* และต้องยังปฏิเสธคำถามนอกเรื่องเหมือนเดิม ไม่ใช่ตอบได้เพราะเกณฑ์หลวมลง */
+  if (tut.ask('สูตรทำต้มยำกุ้ง', { trackId: track }).kind === 'answer')
+    throw new Error('ติวเตอร์ตอบคำถามนอกเรื่อง แปลว่าเกณฑ์รับคำตอบหลวมเกินไป');
+
+  if (!D.drillsFor(track).length) throw new Error('ไม่มีบทฝึกหน้ากล้อง');
+  if (!CIR.circuitsFor(track).length) throw new Error('ไม่มีวงจรให้ไล่หาจุดเสีย');
+  if (!S2.standardForTrack(track)) throw new Error('ยังไม่ผูกกับเกณฑ์มาตรฐานใด');
+  console.log(`       ${track}: ข้อสอบ ${Q.byTrack(track).length} · คลังความรู้ ${kb.length} · ฝึกกล้อง ${D.drillsFor(track).length} · วงจร ${CIR.circuitsFor(track).length}`);
 });
 
 await check('เครื่องจำลองอาการเสีย: ผลวงจรถูกต้องและให้คะแนนวิธีไล่ ไม่ใช่แค่คำตอบ', async () => {

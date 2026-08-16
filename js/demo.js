@@ -75,9 +75,11 @@ export function seedGuestDemo(){
   state.demoSeeded = true;
 
   /* --- เส้นทางหลัก: ฝึกจนจบ ผ่านทั้งทฤษฎีและปฏิบัติ --- */
-  seedTrack('electrician', {
+  seedTrack('automation', {
     theta: 2.02,
-    masteries: [0.93, 0.88, 0.95, 0.84, 0.72, 0.67],
+    /* เรียงตามลำดับทักษะของ track: แลดเดอร์ I/O วงจรควบคุม วงจรกำลัง ปลอดภัย ไล่จุดเสีย
+       ตั้งใจให้ "ไล่หาจุดเสีย" เป็นตัวต่ำสุด หน้าแรกจะได้ชี้ไปที่ห้องจำลองอาการเสียพอดี */
+    masteries: [0.93, 0.88, 0.90, 0.84, 0.95, 0.67],
     exams: [
       { days: 12, items: 10, percent: 70, theta: 0.42, readiness: 60 },
       { days:  8, items: 10, percent: 80, theta: 1.18, readiness: 79 },
@@ -115,7 +117,7 @@ export function seedGuestDemo(){
     ['sharp','แม่นยำ'], ['mock1','ผ่านสนามจำลอง'], ['ready','พร้อมลงสนาม'],
   ]) grantBadge(id, title);
 
-  const r = issue('electrician');
+  const r = issue('automation');
   flush();
   return r?.cert || null;
 }

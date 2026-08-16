@@ -31,8 +31,8 @@ const DEFAULT = {
     joined: null,
   },
   role: 'student',                 // student | teacher
-  activeTrack: 'electrician',
-  enrolled: ['electrician', 'firstaid', 'cloud'],
+  activeTrack: 'automation',
+  enrolled: ['automation', 'firstaid', 'cloud'],
 
   xp: 0,
   streak: 0,
