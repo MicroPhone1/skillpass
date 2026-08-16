@@ -43,7 +43,7 @@ export default {
         <div class="spread" style="align-items:flex-start;gap:18px;flex-wrap:wrap">
           <div style="flex:1;min-width:min(100%,260px)">
             <div class="tiny" style="color:var(--blue-200);letter-spacing:2px;text-transform:uppercase;font-weight:700">
-              SkillPass · สมุดบันทึกทักษะ
+              เช็คช่าง · สมุดบันทึกทักษะ
             </div>
             <h2 style="font-size:26px;font-weight:700;letter-spacing:-.6px;margin-top:10px">${esc(displayName())}</h2>
             <p class="small" style="color:var(--blue-200)">${esc(state.profile.school || 'ยังไม่ได้ระบุสถาบัน')}</p>

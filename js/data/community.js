@@ -80,21 +80,25 @@ export const SEED_POSTS = [
 export const TAGS = ['ถามหน้างาน','เตรียมสอบ','แชร์เทคนิค','แชร์ประสบการณ์','ขอคำแนะนำ'];
 
 /* ------------------------------------------------------------ ห้องครู */
+/* ชั้นเรียนตัวอย่างที่ใช้ในหน้าครู — เป็นห้องระบบควบคุมอัตโนมัติและ PLC
+   จุดอ่อนของนักศึกษาถูกวางให้กระจุกที่ "แลดเดอร์" กับ "ไล่หาจุดเสีย"
+   ซึ่งเป็นสองเรื่องที่เด็กติดจริงในห้องปฏิบัติการ PLC
+   เพื่อให้หน้าวิเคราะห์ชั้นเรียนมีข้อสรุปที่ครูอ่านแล้วเอาไปใช้ต่อได้ */
 export const COHORT = {
-  name:'ปวช.3/2 · ช่างไฟฟ้ากำลัง',
-  track:'electrician',
-  exam:'สอบมาตรฐานฝีมือแรงงาน ระดับ 1',
+  name:'ปวส.1/1 · ระบบควบคุมอัตโนมัติ',
+  track:'automation',
+  exam:'ประเมินสมรรถนะโมดูล PLC และวงจรควบคุม',
   examIn:'อีก 24 วัน',
   students:[
-    { name:'กิตติพัฒน์ ส.',  readiness:88, weak:'e_motor', drills:9, lastActive:'วันนี้',      trend:'up' },
-    { name:'ณัฐริกา พ.',    readiness:81, weak:'e_calc',  drills:7, lastActive:'วันนี้',      trend:'up' },
-    { name:'ภูมิพัฒน์ ค.',   readiness:76, weak:'e_code',  drills:6, lastActive:'เมื่อวาน',    trend:'flat' },
-    { name:'สุชานันท์ ก.',   readiness:72, weak:'e_calc',  drills:5, lastActive:'วันนี้',      trend:'up' },
-    { name:'ธนกฤต ม.',      readiness:64, weak:'e_wire',  drills:4, lastActive:'2 วันก่อน',   trend:'flat' },
-    { name:'อารียา ท.',     readiness:58, weak:'e_calc',  drills:3, lastActive:'เมื่อวาน',    trend:'down' },
-    { name:'ปวริศ ล.',      readiness:49, weak:'e_safe',  drills:1, lastActive:'5 วันก่อน',   trend:'down' },
-    { name:'จิรายุ บ.',      readiness:41, weak:'e_calc',  drills:0, lastActive:'9 วันก่อน',   trend:'down' },
+    { name:'กิตติพัฒน์ ส.',  readiness:88, weak:'p_fix',    drills:9, lastActive:'วันนี้',      trend:'up' },
+    { name:'ณัฐริกา พ.',    readiness:81, weak:'p_ladder', drills:7, lastActive:'วันนี้',      trend:'up' },
+    { name:'ภูมิพัฒน์ ค.',   readiness:76, weak:'p_power',  drills:6, lastActive:'เมื่อวาน',    trend:'flat' },
+    { name:'สุชานันท์ ก.',   readiness:72, weak:'p_ladder', drills:5, lastActive:'วันนี้',      trend:'up' },
+    { name:'ธนกฤต ม.',      readiness:64, weak:'p_io',     drills:4, lastActive:'2 วันก่อน',   trend:'flat' },
+    { name:'อารียา ท.',     readiness:58, weak:'p_ladder', drills:3, lastActive:'เมื่อวาน',    trend:'down' },
+    { name:'ปวริศ ล.',      readiness:49, weak:'p_safe',   drills:1, lastActive:'5 วันก่อน',   trend:'down' },
+    { name:'จิรายุ บ.',      readiness:41, weak:'p_fix',    drills:0, lastActive:'9 วันก่อน',   trend:'down' },
   ],
   /* ค่าเฉลี่ยความชำนาญของทั้งห้อง รายทักษะ (0..1) */
-  classMastery:{ e_calc:0.48, e_wire:0.66, e_safe:0.71, e_tool:0.74, e_code:0.57, e_motor:0.52 },
+  classMastery:{ p_ladder:0.46, p_io:0.63, p_ctrl:0.58, p_power:0.55, p_safe:0.74, p_fix:0.44 },
 };

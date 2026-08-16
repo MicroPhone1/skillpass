@@ -57,7 +57,7 @@ export const STANDARDS = [
 
   {
     id: 'dsd-electrician-industrial-1',
-    trackId: null,                       // ⬜ ยังไม่มี track นี้ในแอป
+    trackId: 'automation',               // เส้นทางระบบควบคุมอัตโนมัติ & PLC อิงเกณฑ์นี้
     authority: 'กรมพัฒนาฝีมือแรงงาน (DSD)',
     name: 'ช่างไฟฟ้าอุตสาหกรรม ระดับ 1',
     nameEn: 'Industrial Electrician Level 1',

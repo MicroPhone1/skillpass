@@ -33,6 +33,23 @@ export const TRACKS = [
     ],
   },
   {
+    id:'automation', cat:'trade', icon:'grid',
+    name:'ระบบควบคุมอัตโนมัติ & PLC',
+    short:'อ่านวงจรควบคุม เขียนแลดเดอร์ ต่อ I/O',
+    cert:'อิงมาตรฐานช่างไฟฟ้าอุตสาหกรรม (DSD) ระดับ 1',
+    nameEn:'Industrial Automation & PLC',
+    certEn:'Aligned with DSD Industrial Electrician Level 1',
+    hours:'≈ 48 ชม.',
+    skills:[
+      { id:'p_ladder', name:'ตรรกะและแลดเดอร์',      short:'แลดเดอร์' },
+      { id:'p_io',     name:'อินพุต/เอาต์พุต & เซนเซอร์', short:'I/O' },
+      { id:'p_ctrl',   name:'วงจรควบคุม',            short:'วงจรควบคุม' },
+      { id:'p_power',  name:'วงจรกำลัง & มอเตอร์',    short:'วงจรกำลัง' },
+      { id:'p_safe',   name:'ความปลอดภัย & LOTO',    short:'ปลอดภัย' },
+      { id:'p_fix',    name:'ไล่หาจุดเสีย',           short:'ไล่จุดเสีย' },
+    ],
+  },
+  {
     id:'welding', cat:'trade', icon:'weld',
     name:'ช่างเชื่อมโลหะ (SMAW)',
     short:'เชื่อมไฟฟ้า อ่านสัญลักษณ์ ตรวจแนวเชื่อม',

@@ -32,7 +32,7 @@ export function render(){
               <path d="M28 52l15 15 29-33" stroke="#fff" stroke-width="11" fill="none"
                 stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <div class="brand-text"><strong>SkillPass</strong><span>ฝึกจนเป็น พิสูจน์ได้</span></div>
+          <div class="brand-text"><strong>เช็คช่าง</strong><span>ฝึกจนเป็น พิสูจน์ได้</span></div>
         </div>
 
         <h1>ข้อสอบวัดว่าคุณ “รู้”<br>ที่นี่วัดว่าคุณ “ทำเป็น”</h1>

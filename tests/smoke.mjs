@@ -1071,5 +1071,39 @@ await check('ธีมเขียว–ดำ สลับได้และไ
   if (!app.includes('data-skin')) throw new Error('ไม่มีปุ่มสลับธีมในเมนูผู้ใช้');
 });
 
+await check('ชั้นเรียนตัวอย่างอ้างทักษะที่มีจริง และมีเนื้อหารองรับครบ', async () => {
+  const CM = await import(url('js/data/community.js'));
+  const S2 = await import(url('js/data/standards.js'));
+  const c = CM.COHORT;
+
+  if (!T.hasTrack(c.track)) throw new Error(`ห้องตัวอย่างอ้าง track "${c.track}" ที่ไม่มีอยู่จริง`);
+  const ids = T.skillsOf(c.track).map(s => s.id);
+
+  /* จุดอ่อนของนักศึกษาต้องเป็นรหัสทักษะของ track นั้น ไม่งั้นหน้าครูจะโชว์รหัสดิบ */
+  for (const s of c.students)
+    if (!ids.includes(s.weak))
+      throw new Error(`${s.name}: จุดอ่อน "${s.weak}" ไม่ใช่ทักษะของ ${c.track}`);
+
+  /* ค่าเฉลี่ยของห้องต้องครบทุกทักษะ ไม่งั้นเรดาร์เทียบชั้นเรียนจะขาดแกน */
+  for (const id of ids)
+    if (typeof c.classMastery[id] !== 'number')
+      throw new Error(`classMastery ขาดทักษะ ${id}`);
+  for (const k of Object.keys(c.classMastery))
+    if (!ids.includes(k)) throw new Error(`classMastery มี ${k} ที่ไม่ใช่ทักษะของ track นี้`);
+
+  /* ทุกทักษะต้องมีข้อสอบ ไม่งั้นแผนซ่อมจุดอ่อนจะสั่งให้ทำข้อสอบที่ไม่มี */
+  const qSkills = new Set(Q.byTrack(c.track).map(q => q.skill));
+  const noQ = ids.filter(id => !qSkills.has(id));
+  if (noQ.length) throw new Error('ทักษะที่ยังไม่มีข้อสอบ: ' + noQ.join(', '));
+
+  /* หน้าครูเรียก drillsFor(track) มาแนะนำบทฝึก ถ้าว่างเปล่าจะแนะนำอะไรไม่ได้ */
+  if (!D.drillsFor(c.track).length)
+    throw new Error('track ของห้องตัวอย่างไม่มีบทฝึกหน้ากล้องเลย');
+
+  /* ห้องตัวอย่างควรผูกกับเกณฑ์มาตรฐานจริง เพื่อให้หน้าเส้นทางมีที่มาอ้างอิง */
+  if (!S2.standardForTrack(c.track))
+    throw new Error('track ของห้องตัวอย่างยังไม่ผูกกับเกณฑ์มาตรฐานใด');
+});
+
 console.log(fails ? `\n${fails} FAILURE(S)\n` : '\nall green\n');
 process.exit(fails ? 1 : 0);
