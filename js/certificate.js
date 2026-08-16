@@ -207,7 +207,7 @@ const LINE = '#DFE5F0';
 /* ------------------------------------------------------------ ข้อความสองภาษา */
 const STRINGS = {
   th: {
-    tagline: 'ฝึกจนเป็น พิสูจน์ได้',
+    tagline: 'จำลองสถานการณ์จริง วิเคราะห์อย่างแม่นยำ',
     /* ชื่อเอกสารใช้ภาษาอังกฤษทั้งสองฉบับ เพราะบรรทัดนี้วาดด้วยเซริฟละติน
        ซึ่งไม่มีสระ/วรรณยุกต์ไทย พอใส่คำไทยลงไป สระกับวรรณยุกต์จะหลุด
        ออกจากตัวพยัญชนะและตำแหน่งเคลื่อน (ยิ่งมี letter-spacing ยิ่งชัด) */
@@ -218,18 +218,18 @@ const STRINGS = {
     benchmark: 'เทียบเคียงเกณฑ์',
     stats: { score:'คะแนนรวม', questions:'ข้อสอบที่ผ่าน', practical:'ภาคปฏิบัติ',
              readiness:'ความพร้อมสอบ', skills:'ทักษะย่อย' },
-    signL: ['ผู้อำนวยการหลักสูตร', 'CheckChang Academy'],
+    signL: ['ผู้อำนวยการหลักสูตร', 'Check Chang Academy'],
     signR: ['ผู้ประเมินภาคปฏิบัติ', 'Assessment Board'],
     certNo: 'เลขที่เกียรติบัตร',
     issuedOn: 'ออกให้ ณ วันที่',
-    footer: 'ออกโดยระบบเช็คช่าง · ตรวจสอบย้อนกลับได้ด้วยเลขที่เกียรติบัตร · เอกสารต้นแบบเพื่อการสาธิต',
+    footer: 'ออกโดยระบบ Check Chang · ตรวจสอบย้อนกลับได้ด้วยเลขที่เกียรติบัตร · เอกสารต้นแบบเพื่อการสาธิต',
     locale: 'th-TH',
     track: t => t.name,
     cert:  t => t.cert,
     level: lv => lv.th,
   },
   en: {
-    tagline: 'Practice until proven',
+    tagline: 'Simulate. Diagnose. Prove.',
     title: 'CERTIFICATE',
     subtitle: 'OF ACHIEVEMENT',
     presentedTo: 'This is to certify that',
@@ -237,11 +237,11 @@ const STRINGS = {
     benchmark: 'Benchmarked against',
     stats: { score:'Overall Score', questions:'Questions Passed', practical:'Practical',
              readiness:'Exam Readiness', skills:'Sub-skills' },
-    signL: ['Programme Director', 'CheckChang Academy'],
+    signL: ['Programme Director', 'Check Chang Academy'],
     signR: ['Practical Assessor', 'Assessment Board'],
     certNo: 'Certificate No.',
     issuedOn: 'Issued on',
-    footer: 'Issued by CheckChang · Verifiable by certificate number · Prototype document for demonstration',
+    footer: 'Issued by Check Chang · Verifiable by certificate number · Prototype document for demonstration',
     locale: 'en-GB',
     track: t => t.nameEn || t.name,
     cert:  t => t.certEn || t.cert,
@@ -363,7 +363,7 @@ export function certificateSVG(cert, { standalone = false, lang } = {}){
     <rect x="-104" y="-15" width="30" height="30" rx="9" fill="${BLUE}"/>
     <path d="M-97 -1 l5 5 L-81 -9" fill="none" stroke="#fff" stroke-width="3.6"
       stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="-66" y="-2" font-size="19" font-weight="700" fill="${INK}" letter-spacing="-.3">CheckChang</text>
+    <text x="-66" y="-2" font-size="19" font-weight="700" fill="${INK}" letter-spacing="-.3">Check Chang</text>
     <text x="-66" y="12" font-size="9.5" fill="${SOFT}" letter-spacing="${ls(L.tagline, .5)}">${esc(L.tagline)} · Skill Certification Platform</text>
   </g>
   <line x1="${W / 2 - 44}" y1="${Y.hair}" x2="${W / 2 + 44}" y2="${Y.hair}" stroke="${GOLD}" stroke-width="1" opacity=".7"/>

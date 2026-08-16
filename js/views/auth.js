@@ -10,12 +10,12 @@ let tab = 'login';        // login | register
 let busy = false;
 
 const HIGHLIGHTS = [
-  { icon:'brain',  title:'ข้อสอบปรับระดับด้วย IRT',
-    text:'ข้อถัดไปเลือกจากระดับความสามารถจริงของคุณ วัดแม่นด้วยจำนวนข้อที่น้อยลง' },
-  { icon:'camera', title:'ตรวจภาคปฏิบัติด้วยกล้อง',
-    text:'จับจังหวะ ความนิ่ง ตำแหน่ง และลำดับขั้นตอน — ประมวลผลในเครื่องคุณเท่านั้น' },
-  { icon:'medal',  title:'เกียรติบัตรที่มีหลักฐานรองรับ',
-    text:'ออกให้เมื่อผ่านเกณฑ์ทั้งทฤษฎีและปฏิบัติ พร้อมเลขที่กำกับทุกใบ' },
+  { icon:'zone',   title:'ระบบจำลองปัญหาอัจฉริยะ',
+    text:'สุ่มเคสปัญหาหน้างานตามระดับความสามารถ เพื่อฝึกคิดวิเคราะห์และไล่วงจรอย่างเป็นระบบ' },
+  { icon:'brain',  title:'ติวเตอร์ AI ช่วยคิด',
+    text:'ชี้แนะแนวทางแก้ปัญหาและตรรกะการตรวจสอบทีละขั้น พร้อมอ้างอิงมาตรฐานวิศวกรรมจริง' },
+  { icon:'radar',  title:'พอร์ตโฟลิโอสมรรถนะจริง',
+    text:'รายงานจุดแข็ง–จุดอ่อนรายบุคคลอย่างละเอียด พร้อมสะท้อนความพร้อมสู่การทำงานในอุตสาหกรรม' },
 ];
 
 export function render(){
@@ -28,16 +28,15 @@ export function render(){
       <div class="auth-brand-inner">
         <div class="brand" style="padding:0 0 28px">
           <div class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="currentColor"/>
-              <path d="M28 52l15 15 29-33" stroke="#fff" stroke-width="11" fill="none"
-                stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="currentColor"/><path fill="#fff" d="M50 26c-13.8 0-25 11.2-25 25v6h50v-6c0-13.8-11.2-25-25-25Z"/><rect x="12" y="59" width="76" height="12" rx="6" fill="#fff"/><path fill="currentColor" d="M40 31.5c-2.4 1.2-4.6 2.8-6.5 4.7V57h6.5V31.5ZM60 31.5c2.4 1.2 4.6 2.8 6.5 4.7V57H60V31.5Z"/></svg>
           </div>
-          <div class="brand-text"><strong>เช็คช่าง</strong><span>ฝึกจนเป็น พิสูจน์ได้</span></div>
+          <div class="brand-text"><strong>Check Chang</strong><span>จำลองสถานการณ์จริง วิเคราะห์อย่างแม่นยำ</span></div>
         </div>
 
         <h1>ข้อสอบวัดว่าคุณ “รู้”<br>ที่นี่วัดว่าคุณ “ทำเป็น”</h1>
         <p class="auth-lead">
-          แพลตฟอร์มเตรียมสอบใบรับรองที่รวมข้อสอบปรับระดับ ติวเตอร์ที่อ้างอิงแหล่งที่มาได้
+          แพลตฟอร์มฝึกปฏิบัติการเสมือนจริง ที่รวมระบบจำลองสถานการณ์ปัญหาหน้างาน
+          ติวเตอร์ AI วิเคราะห์ตรรกะแบบขั้นตอน และรายงานสมรรถนะรายบุคคล
           และการตรวจภาคปฏิบัติผ่านกล้อง ไว้ในที่เดียว
         </p>
 

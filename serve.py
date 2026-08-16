@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-serve.py — เซิร์ฟเวอร์สำหรับพัฒนา/สาธิต เช็คช่าง
+serve.py — เซิร์ฟเวอร์สำหรับพัฒนา/สาธิต Check Chang
 
 ทำไมต้องมีไฟล์นี้แทนการเปิด index.html ตรง ๆ:
   1) แอปใช้ ES modules (import/export) ซึ่งเบราว์เซอร์บล็อกเมื่อเปิดผ่าน file://
@@ -105,7 +105,7 @@ def make_cert(ip: str) -> bool:
         exe, "req", "-x509", "-newkey", "rsa:2048", "-sha256",
         "-days", "825", "-nodes",
         "-keyout", str(KEY), "-out", str(CERT),
-        "-subj", "/CN=เช็คช่าง Dev",
+        "-subj", "/CN=Check Chang Dev",
         "-addext", san,
     ]
     try:
@@ -234,7 +234,7 @@ class ThreadingTLSServer(socketserver.ThreadingTCPServer):
 def banner(scheme: str, port: int, ip: str, secure: bool):
     line = "─" * 58
     print()
-    print(C["blue"] + C["b"] + "  เช็คช่าง" + C["off"] + C["dim"] + "  ระบบเตรียมความพร้อมและฝึกทักษะ" + C["off"])
+    print(C["blue"] + C["b"] + "  Check Chang" + C["off"] + C["dim"] + "  ระบบเตรียมความพร้อมและฝึกทักษะ" + C["off"])
     print(C["dim"] + "  " + line + C["off"])
     print(f"  {C['b']}บนเครื่องนี้{C['off']}   {C['cyan']}{scheme}://localhost:{port}{C['off']}")
     print(f"  {C['b']}เครื่องอื่น{C['off']}    {C['cyan']}{scheme}://{ip}:{port}{C['off']}   {C['dim']}(ต่อ Wi-Fi วงเดียวกัน){C['off']}")
@@ -282,7 +282,7 @@ def banner(scheme: str, port: int, ip: str, secure: bool):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="เช็คช่าง dev server")
+    ap = argparse.ArgumentParser(description="Check Chang dev server")
     ap.add_argument("--port", type=int, default=0, help="พอร์ต (ค่าเริ่มต้น 8443 สำหรับ https, 8000 สำหรับ http)")
     ap.add_argument("--http", action="store_true", help="บังคับใช้ HTTP แทน HTTPS")
     ap.add_argument("--api-key", help="API key ของผู้ให้บริการ AI (ทับค่าใน .env)")
